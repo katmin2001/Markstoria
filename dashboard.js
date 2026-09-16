@@ -237,7 +237,7 @@ function bookmarkRow(bookmark) {
     <div class="bookmark-main"><div class="favicon"><span>${BL.escapeHtml((bookmark.domain || "B")[0].toUpperCase())}</span><img loading="lazy" src="${BL.faviconUrl(bookmark.url)}" alt="" /></div><div class="bookmark-text"><a class="bookmark-title" href="${BL.escapeHtml(bookmark.url)}" target="_blank" rel="noreferrer" data-open="${bookmark.id}">${BL.escapeHtml(bookmark.title)}${pinned}</a><button class="bookmark-domain domain-link" data-domain-filter="${BL.escapeHtml(bookmark.domain)}" type="button" title="Chỉ xem ${BL.escapeHtml(bookmark.domain)}">${BL.escapeHtml(bookmark.domain)}</button><div class="tag-line">${unread}${broken}${tags}</div></div></div>
     <div class="folder-cell" title="${BL.escapeHtml(bookmark.folderPath)}">${BL.escapeHtml(bookmark.folderPath)}</div>
     <div class="activity-cell"><span>${BL.relativeDate(bookmark.dateAdded)}</span><span>${bookmark.visitCount ? `${bookmark.visitCount} lượt truy cập` : "Chưa có lịch sử"}</span></div>
-    <div class="row-actions"><button class="icon-button" data-action="read" type="button" title="${bookmark.meta.readStatus === "unread" ? "Đánh dấu đã đọc" : "Đánh dấu chưa đọc"}" aria-label="Đổi trạng thái đọc"><svg><use href="#i-book"></use></svg></button><button class="icon-button" data-action="pin" type="button" title="Ghim" aria-label="Ghim"><svg><use href="#i-pin"></use></svg></button><button class="icon-button" data-action="edit" type="button" title="Chỉnh sửa" aria-label="Chỉnh sửa"><svg><use href="#i-edit"></use></svg></button></div>
+    <div class="row-actions"><button class="icon-button" data-action="read" type="button" title="${bookmark.meta.readStatus === "unread" ? "Đánh dấu đã đọc" : "Đánh dấu chưa đọc"}" aria-label="Đổi trạng thái đọc"><svg><use href="#i-book"></use></svg></button><button class="icon-button" data-action="pin" type="button" title="Ghim" aria-label="Ghim"><svg><use href="#i-pin"></use></svg></button><button class="icon-button" data-action="edit" type="button" title="Chỉnh sửa" aria-label="Chỉnh sửa"><svg><use href="#i-edit"></use></svg></button><button class="icon-button danger-action" data-action="delete" type="button" title="Xóa khỏi Chrome" aria-label="Xóa khỏi Chrome"><svg><use href="#i-trash"></use></svg></button></div>
   </article>`;
 }
 
@@ -470,6 +470,11 @@ function bindRows() {
     row.querySelector('[data-action="read"]').addEventListener("click", () => toggleRead(bookmark));
     row.querySelector('[data-action="pin"]').addEventListener("click", () => togglePin(bookmark));
     row.querySelector('[data-action="edit"]').addEventListener("click", () => openEditor(bookmark));
+    row.querySelector('[data-action="delete"]').addEventListener("click", async () => {
+      if (await askConfirm("Xóa bookmark?", `“${bookmark.title}” sẽ bị xóa khỏi Chrome. Một bản phục hồi sẽ được tạo trước khi xóa.`, "Xóa bookmark")) {
+        await deleteBookmarks([bookmark], "Đã xóa bookmark");
+      }
+    });
     row.addEventListener("dragstart", () => { state.draggedId = id; row.classList.add("is-dragging"); });
     row.addEventListener("dragend", () => { state.draggedId = null; row.classList.remove("is-dragging"); $$(".is-drop-target").forEach((el) => el.classList.remove("is-drop-target")); });
     row.addEventListener("dragover", (event) => { if (state.draggedId && state.draggedId !== id) { event.preventDefault(); row.classList.add("is-drop-target"); } });
@@ -1227,8 +1232,25 @@ function bindEvents() {
   }, { passive: true });
 }
 
+function watchBookmarkChanges() {
+  let refreshTimer;
+  const scheduleRefresh = () => {
+    clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(() => {
+      refreshLibrary({ keepSelection: true }).catch(() => {});
+    }, 160);
+  };
+  chrome.bookmarks.onCreated.addListener(scheduleRefresh);
+  chrome.bookmarks.onRemoved.addListener(scheduleRefresh);
+  chrome.bookmarks.onChanged.addListener(scheduleRefresh);
+  chrome.bookmarks.onMoved.addListener(scheduleRefresh);
+  chrome.bookmarks.onChildrenReordered?.addListener(scheduleRefresh);
+  chrome.bookmarks.onImportEnded?.addListener(scheduleRefresh);
+}
+
 async function init() {
   bindEvents();
+  watchBookmarkChanges();
   const [library, storedBackup] = await Promise.all([
     BL.loadLibrary(true),
     BL.chromeCall((done) => chrome.storage.local.get(["bookmarkLensLastBackup"], done)),

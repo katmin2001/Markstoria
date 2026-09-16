@@ -209,7 +209,24 @@ function bindEvents() {
   });
 }
 
+function watchBookmarkChanges() {
+  let refreshTimer;
+  const scheduleRefresh = () => {
+    clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(() => {
+      refresh().catch(() => {});
+    }, 160);
+  };
+  chrome.bookmarks.onCreated.addListener(scheduleRefresh);
+  chrome.bookmarks.onRemoved.addListener(scheduleRefresh);
+  chrome.bookmarks.onChanged.addListener(scheduleRefresh);
+  chrome.bookmarks.onMoved.addListener(scheduleRefresh);
+  chrome.bookmarks.onChildrenReordered?.addListener(scheduleRefresh);
+  chrome.bookmarks.onImportEnded?.addListener(scheduleRefresh);
+}
+
 bindEvents();
+watchBookmarkChanges();
 refresh().catch((error) => {
   els.libraryCount.textContent = "Không thể tải";
   els.results.innerHTML = `<div class="empty">${BL.escapeHtml(error.message)}</div>`;

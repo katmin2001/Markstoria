@@ -149,6 +149,8 @@ select { height: 36px; padding: 0 30px 0 10px; font-size: 12px; }
 .row-actions { display: flex; justify-content: flex-end; opacity: 0; }
 .bookmark-row:hover .row-actions, .bookmark-row:focus-within .row-actions { opacity: 1; }
 .row-actions .icon-button { width: 30px; height: 30px; }
+.row-actions .danger-action { color: var(--danger); }
+.row-actions .danger-action:hover { background: var(--danger-soft); }
 .row-actions svg { width: 15px; height: 15px; }
 .empty-state { display: grid; min-height: 340px; place-content: center; justify-items: center; padding: 32px; text-align: center; }
 .empty-icon { display: grid; width: 52px; height: 52px; margin-bottom: 12px; place-items: center; border-radius: 8px; background: var(--primary-soft); color: var(--primary); }
