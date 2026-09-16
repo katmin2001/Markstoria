@@ -1,6 +1,8 @@
-# Bookmark Lens 3.2.0
+# Bookmark Lens 3.2.0 — Chrome Bookmark Manager Extension
 
 Developed by **Kenzy**.
+
+![alt text](image.png)
 
 Tiện ích Chrome giúp tìm, lọc, tổ chức và bảo trì toàn bộ thư viện bookmark. Popup phục vụ thao tác nhanh; Side Panel hỗ trợ làm việc song song; trang quản lý toàn màn hình dành cho các công việc lớn.
 
