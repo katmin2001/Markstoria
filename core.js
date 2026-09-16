@@ -127,7 +127,13 @@
   }
 
   function bytesToBase64(bytes) {
-    return btoa(String.fromCharCode(...new Uint8Array(bytes)));
+    const view = new Uint8Array(bytes);
+    let binary = "";
+    const chunkSize = 0x8000;
+    for (let offset = 0; offset < view.length; offset += chunkSize) {
+      binary += String.fromCharCode(...view.subarray(offset, offset + chunkSize));
+    }
+    return btoa(binary);
   }
 
   function base64ToBytes(value) {
@@ -200,6 +206,23 @@
     await chromeCall((done) => chrome.storage.local.set({ [VAULT_DATA_KEY]: encrypted }, done));
   }
 
+  async function removeVisibleBookmarkCopies(url) {
+    const matches = await chromeCall((done) => chrome.bookmarks.search({ url }, done)).catch(() => []);
+    const bookmarkMatches = matches.filter((item) => item.url && normalizeUrl(item.url) === normalizeUrl(url));
+    if (!bookmarkMatches.length) return { removed: 0 };
+    const metadata = await loadMetadata().catch(() => ({}));
+    let metadataChanged = false;
+    for (const bookmark of bookmarkMatches) {
+      await chromeCall((done) => chrome.bookmarks.remove(bookmark.id, done)).catch(() => {});
+      if (metadata[bookmark.id]) {
+        delete metadata[bookmark.id];
+        metadataChanged = true;
+      }
+    }
+    if (metadataChanged) await saveMetadata(metadata);
+    return { removed: bookmarkMatches.length };
+  }
+
   function createVaultItem({ title, url, tags = [], note = "" }) {
     return {
       id: `hidden-${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -233,8 +256,8 @@
   async function saveMetadata(metadata) {
     await chromeCall((done) => chrome.storage.local.set({ [META_KEY]: metadata }, done));
     const settings = await loadSettings().catch(() => ({}));
-    if (!settings.syncMetadata || !chrome.storage?.sync) return;
-    await saveMetadataToSync(metadata);
+    if (!settings.syncMetadata || !chrome.storage?.sync) return { synced: false, reason: "disabled" };
+    return saveMetadataToSync(metadata);
   }
 
   async function saveMetadataToSync(metadata) {
@@ -256,7 +279,11 @@
     values[META_SYNC_INDEX] = keys.map((key, index) => ({ key, index }));
     const removeKeys = previousKeys.filter((key) => !keys.includes(key));
     if (removeKeys.length) await chromeCall((done) => chrome.storage.sync.remove(removeKeys, done)).catch(() => {});
-    await chromeCall((done) => chrome.storage.sync.set(values, done)).catch(() => {});
+    try {
+      await chromeCall((done) => chrome.storage.sync.set(values, done));
+    } catch (error) {
+      return { synced: false, reason: "sync-error", error: error.message };
+    }
     return { synced: true, chunks: chunks.length };
   }
 
@@ -470,6 +497,7 @@
     unlockVault,
     saveVaultItems,
     createVaultItem,
+    removeVisibleBookmarkCopies,
     loadMetadata,
     saveMetadata,
     saveMetadataToSync,

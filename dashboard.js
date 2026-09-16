@@ -20,6 +20,7 @@ const state = {
   indexedMatchIds: null,
   indexTimer: null,
   searchTimer: null,
+  filteredCount: 0,
   draggedId: null,
   undoStack: [],
   pendingRulePreview: null,
@@ -33,6 +34,7 @@ const state = {
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
+const t = (value) => window.BookmarkLensI18n?.t(value) || value;
 const els = {
   searchInput: $("#searchInput"), clearSearch: $("#clearSearch"), searchSuggestions: $("#searchSuggestions"),
   quickAdd: $("#quickAdd"), commandButton: $("#commandButton"), openSidePanel: $("#openSidePanel"), helpButton: $("#helpButton"), themeToggle: $("#themeToggle"), smartFolders: $("#smartFolders"),
@@ -80,10 +82,10 @@ function folderOptions(selectedId, includeRoot = false) {
 
 function showToast(message, undo) {
   clearTimeout(state.toastTimer);
-  els.toastMessage.textContent = window.BookmarkLensI18n?.t(message) || message;
+  els.toastMessage.textContent = t(message);
   const canUndo = undo || state.undoStack.length > 0;
   els.undoButton.classList.toggle("is-hidden", !canUndo);
-  els.undoButton.innerHTML = `<svg><use href="#i-undo"></use></svg>Hoàn tác${state.undoStack.length > 1 ? ` (${state.undoStack.length})` : ""}`;
+  els.undoButton.innerHTML = `<svg><use href="#i-undo"></use></svg>${t("Hoàn tác")}${state.undoStack.length > 1 ? ` (${state.undoStack.length})` : ""}`;
   els.toast.classList.add("is-visible");
   state.toastTimer = setTimeout(() => els.toast.classList.remove("is-visible"), undo ? 7000 : 2600);
 }
@@ -241,6 +243,7 @@ function bookmarkRow(bookmark) {
 
 function renderLibrary() {
   const filtered = filteredBookmarks();
+  state.filteredCount = filtered.length;
   const useVirtual = Boolean(state.settings.virtualList) && filtered.length > 600;
   const pageLimit = useVirtual ? filtered.length : state.visibleLimit;
   const pageItems = filtered.slice(0, pageLimit);
@@ -596,9 +599,10 @@ async function deleteBookmarks(items, message) {
 }
 
 function askConfirm(title, message, actionLabel = "Tiếp tục") {
-  els.confirmTitle.textContent = title;
-  els.confirmMessage.textContent = message;
-  els.confirmAction.textContent = actionLabel;
+  els.confirmTitle.textContent = t(title);
+  els.confirmMessage.textContent = t(message);
+  els.confirmAction.textContent = t(actionLabel);
+  window.BookmarkLensI18n?.apply(els.confirmDialog);
   els.confirmDialog.showModal();
   return new Promise((resolve) => { state.confirmResolver = resolve; });
 }
@@ -872,7 +876,7 @@ async function applyRuleChanges(changes, message = "Đã áp dụng luật tự 
 
 function saveWorkspace() {
   const name = els.workspaceName.value.trim() || currentViewTitle();
-  const bookmarkIds = filteredBookmarks().slice(0, 80).map((item) => item.id);
+  const bookmarkIds = filteredBookmarks().map((item) => item.id);
   const workspace = {
     id: `workspace-${Date.now()}`,
     name,
@@ -885,7 +889,7 @@ function saveWorkspace() {
   };
   state.settings.workspaces = [workspace, ...(state.settings.workspaces || [])].slice(0, 12);
   els.workspaceName.value = "";
-  BL.saveSettings(state.settings).then(() => { renderAutomation(); showToast("Đã lưu workspace"); });
+  BL.saveSettings(state.settings).then(() => { renderAutomation(); showToast(`Đã lưu workspace với ${bookmarkIds.length} bookmark`); });
 }
 
 function openWorkspace(workspace) {
@@ -907,8 +911,11 @@ async function openWorkspaceTabs(workspace) {
   const items = ids.size ? state.bookmarks.filter((item) => ids.has(item.id)) : filteredBookmarks();
   if (!items.length) { showToast("Workspace chưa có bookmark để mở"); return; }
   if (items.length > 20 && !await askConfirm("Mở nhiều tab?", `Bạn sắp mở ${items.length} tab từ workspace.`, "Mở tất cả")) return;
-  items.slice(0, 80).forEach((item) => chrome.tabs.create({ url: item.url, active: false }));
-  showToast(`Đã mở ${Math.min(items.length, 80)} tab từ workspace`);
+  for (let index = 0; index < items.length; index += 1) {
+    chrome.tabs.create({ url: items[index].url, active: false });
+    if (index > 0 && index % 25 === 0) await new Promise((resolve) => setTimeout(resolve, 120));
+  }
+  showToast(`Đã mở ${items.length} tab từ workspace`);
 }
 
 function commandDefinitions() {
@@ -975,10 +982,10 @@ function renderHiddenVault() {
 async function unlockHiddenVault() {
   const configured = await BL.isVaultConfigured();
   if (!configured) {
-    const password = prompt("Tạo mật khẩu cho Kho ẩn");
+    const password = prompt(t("Tạo mật khẩu cho Kho ẩn"));
     if (!password) return;
     if (password.length < 6) { showToast("Mật khẩu nên có ít nhất 6 ký tự"); return; }
-    const confirmPassword = prompt("Nhập lại mật khẩu Kho ẩn");
+    const confirmPassword = prompt(t("Nhập lại mật khẩu Kho ẩn"));
     if (password !== confirmPassword) { showToast("Mật khẩu nhập lại không khớp"); return; }
     const vault = await BL.createVault(password);
     state.vaultKey = vault.key;
@@ -987,7 +994,7 @@ async function unlockHiddenVault() {
     showToast("Đã tạo và mở khóa Kho ẩn");
     return;
   }
-  const password = prompt("Nhập mật khẩu Kho ẩn");
+  const password = prompt(t("Nhập mật khẩu Kho ẩn"));
   if (!password) return;
   try {
     const vault = await BL.unlockVault(password);
@@ -1016,8 +1023,10 @@ async function saveCurrentTabToHiddenVault() {
   const item = BL.createVaultItem({ title: tab.title || tab.url, url: tab.url });
   state.hiddenItems = [item, ...state.hiddenItems];
   await BL.saveVaultItems(state.vaultKey, state.hiddenItems);
+  const result = await BL.removeVisibleBookmarkCopies(tab.url);
+  await refreshLibrary({ keepSelection: true });
   renderHiddenVault();
-  showToast("Đã lưu trang vào Kho ẩn");
+  showToast(result.removed ? `Đã lưu ẩn và gỡ ${result.removed} bookmark khỏi Chrome` : "Đã lưu trang vào Kho ẩn");
 }
 
 async function deleteHiddenItem(item) {
@@ -1207,7 +1216,7 @@ function bindEvents() {
   });
   addEventListener("scroll", () => {
     if (state.settings.virtualList === false) return;
-    const filteredLength = filteredBookmarks().length;
+    const filteredLength = state.filteredCount;
     if (filteredLength <= 600) return;
     const top = Math.max(0, scrollY - 170);
     const nextStart = Math.max(0, Math.floor(top / state.virtualRowHeight) - 4);

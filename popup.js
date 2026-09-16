@@ -69,6 +69,10 @@ const els = {
 
 let toastTimer;
 
+function t(value) {
+  return window.BookmarkLensI18n?.t(value) || value;
+}
+
 function chromeCall(apiCall) {
   return new Promise((resolve, reject) => {
     apiCall((result) => {
@@ -341,7 +345,7 @@ function updateFilterUi() {
 
 function showToast(message) {
   window.clearTimeout(toastTimer);
-  els.toast.textContent = window.BookmarkLensI18n?.t(message) || message;
+  els.toast.textContent = t(message);
   els.toast.classList.add("is-visible");
   toastTimer = window.setTimeout(() => els.toast.classList.remove("is-visible"), 2200);
 }
@@ -372,13 +376,14 @@ function openDeleteDialog(bookmark) {
 async function refreshBookmarks() {
   state.bookmarks = [];
   state.folders = [];
-  const [tree, stored, history] = await Promise.all([
+  const [tree, metadata, settings, history] = await Promise.all([
     chromeCall((done) => chrome.bookmarks.getTree(done)),
-    chromeCall((done) => chrome.storage.local.get(["bookmarkLensMeta", "bookmarkLensSettings"], done)),
+    BookmarkLens.loadMetadata(),
+    BookmarkLens.loadSettings(),
     chromeCall((done) => chrome.history.search({ text: "", startTime: 0, maxResults: 10000 }, done)).catch(() => []),
   ]);
-  state.metadata = stored.bookmarkLensMeta || {};
-  state.settings = { defaultSort: "newest", searchHistory: [], ...stored.bookmarkLensSettings };
+  state.metadata = metadata || {};
+  state.settings = { defaultSort: "newest", searchHistory: [], ...settings };
   state.historyMap = new Map(history.map((item) => [normalizeUrl(item.url), item]));
   flattenTree(tree);
   findDuplicates();
@@ -445,8 +450,8 @@ async function saveQuickAdd(event) {
   }
   state.settings.lastFolderId = els.addFolder.value;
   await Promise.all([
-    chromeCall((done) => chrome.storage.local.set({ bookmarkLensMeta: state.metadata }, done)),
-    chromeCall((done) => chrome.storage.local.set({ bookmarkLensSettings: state.settings }, done)),
+    BookmarkLens.saveMetadata(state.metadata),
+    BookmarkLens.saveSettings(state.settings),
   ]);
   els.addDialog.close();
   await refreshBookmarks();
@@ -456,7 +461,7 @@ async function rememberSearch() {
   const query = state.query.trim();
   if (!query) return;
   state.settings.searchHistory = [query, ...(state.settings.searchHistory || []).filter((item) => item !== query)].slice(0, 10);
-  await chromeCall((done) => chrome.storage.local.set({ bookmarkLensSettings: state.settings }, done));
+  await BookmarkLens.saveSettings(state.settings);
   els.searchSuggestions.innerHTML = state.settings.searchHistory.map((term) => `<option value="${escapeHtml(term)}"></option>`).join("");
 }
 
@@ -464,14 +469,14 @@ async function requestVaultPassword(createIfMissing = true) {
   const configured = await BookmarkLens.isVaultConfigured();
   if (!configured && !createIfMissing) return null;
   if (!configured) {
-    const password = prompt("Tạo mật khẩu cho Kho ẩn");
+    const password = prompt(t("Tạo mật khẩu cho Kho ẩn"));
     if (!password) return null;
     if (password.length < 6) { showToast("Mật khẩu nên có ít nhất 6 ký tự"); return null; }
-    const confirmPassword = prompt("Nhập lại mật khẩu Kho ẩn");
+    const confirmPassword = prompt(t("Nhập lại mật khẩu Kho ẩn"));
     if (password !== confirmPassword) { showToast("Mật khẩu nhập lại không khớp"); return null; }
     return { ...(await BookmarkLens.createVault(password)), created: true };
   }
-  const password = prompt("Nhập mật khẩu Kho ẩn");
+  const password = prompt(t("Nhập mật khẩu Kho ẩn"));
   if (!password) return null;
   try {
     return await BookmarkLens.unlockVault(password);
@@ -492,7 +497,9 @@ async function saveHiddenTab() {
   }
   const item = BookmarkLens.createVaultItem({ title: tab.title || tab.url, url: tab.url });
   await BookmarkLens.saveVaultItems(vault.key, [item, ...vault.items]);
-  showToast("Đã lưu trang vào Kho ẩn");
+  const result = await BookmarkLens.removeVisibleBookmarkCopies(tab.url);
+  await refreshBookmarks();
+  showToast(result.removed ? `Đã lưu ẩn và gỡ ${result.removed} bookmark khỏi Chrome` : "Đã lưu trang vào Kho ẩn");
 }
 
 function bindEvents() {
@@ -563,7 +570,7 @@ function bindEvents() {
     const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
     document.documentElement.dataset.theme = next;
     state.settings.theme = next;
-    chrome.storage.local.set({ bookmarkLensSettings: state.settings });
+    BookmarkLens.saveSettings(state.settings);
   });
   els.closeEdit.addEventListener("click", () => els.editDialog.close());
   els.cancelEdit.addEventListener("click", () => els.editDialog.close());

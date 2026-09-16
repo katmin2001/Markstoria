@@ -1,5 +1,7 @@
 const SETTINGS_KEY = "bookmarkLensSettings";
 const META_KEY = "bookmarkLensMeta";
+const META_SYNC_PREFIX = "bookmarkLensMetaChunk";
+const META_SYNC_INDEX = "bookmarkLensMetaIndex";
 
 const MESSAGES = {
   vi: {
@@ -59,6 +61,41 @@ async function loadSettings() {
     : localSettings;
 }
 
+async function saveMetadataToSync(metadata) {
+  if (!chrome.storage?.sync) return { synced: false, reason: "unavailable" };
+  const payload = JSON.stringify(metadata);
+  const maxChunkSize = 7000;
+  const maxPayloadSize = 90000;
+  const previous = await callChrome((done) => chrome.storage.sync.get([META_SYNC_INDEX], done)).catch(() => ({}));
+  const previousKeys = (previous[META_SYNC_INDEX] || []).map((item) => item.key);
+  if (payload.length > maxPayloadSize) {
+    if (previousKeys.length) await callChrome((done) => chrome.storage.sync.remove(previousKeys.concat(META_SYNC_INDEX), done)).catch(() => {});
+    return { synced: false, reason: "quota" };
+  }
+  const chunks = [];
+  for (let offset = 0; offset < payload.length; offset += maxChunkSize) {
+    chunks.push(payload.slice(offset, offset + maxChunkSize));
+  }
+  const keys = chunks.map((_, index) => `${META_SYNC_PREFIX}${index}`);
+  const values = Object.fromEntries(keys.map((key, index) => [key, chunks[index]]));
+  values[META_SYNC_INDEX] = keys.map((key, index) => ({ key, index }));
+  const removeKeys = previousKeys.filter((key) => !keys.includes(key));
+  if (removeKeys.length) await callChrome((done) => chrome.storage.sync.remove(removeKeys, done)).catch(() => {});
+  try {
+    await callChrome((done) => chrome.storage.sync.set(values, done));
+  } catch (error) {
+    return { synced: false, reason: "sync-error", error: error.message };
+  }
+  return { synced: true, chunks: chunks.length };
+}
+
+async function saveMetadata(metadata) {
+  await callChrome((done) => chrome.storage.local.set({ [META_KEY]: metadata }, done));
+  const settings = await loadSettings().catch(() => ({}));
+  if (!settings.syncMetadata) return { synced: false, reason: "disabled" };
+  return saveMetadataToSync(metadata);
+}
+
 function ruleMatchesBookmark(rule, bookmark) {
   if (!rule?.enabled || !rule.value) return false;
   const needle = normalizeText(rule.value);
@@ -96,7 +133,7 @@ async function applyRulesToBookmark(bookmark) {
     tags: [...tags],
     ...(readStatus ? { readStatus } : {}),
   };
-  await callChrome((done) => chrome.storage.local.set({ [META_KEY]: metadata }, done));
+  await saveMetadata(metadata);
 }
 
 async function getActiveWindowId() {
@@ -147,7 +184,6 @@ async function saveTab(tab) {
   if (existing.length) return { status: "duplicate", title: existing[0].title || tab.title || tab.url, url: tab.url };
   const parentId = await getDefaultFolderId();
   const created = await callChrome((done) => chrome.bookmarks.create({ parentId, title: tab.title || tab.url, url: tab.url }, done));
-  await applyRulesToBookmark(created);
   return { status: "saved", title: created.title || tab.title || tab.url, url: created.url };
 }
 
@@ -203,7 +239,7 @@ chrome.bookmarks.onRemoved.addListener((id) => {
     const metadata = stored.bookmarkLensMeta || {};
     if (!metadata[id]) return;
     delete metadata[id];
-    await callChrome((done) => chrome.storage.local.set({ bookmarkLensMeta: metadata }, done));
+    await saveMetadata(metadata);
   }).catch(() => {});
 });
 
