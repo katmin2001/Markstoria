@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Bookmark Lens - Quản lý thư viện</title>
+    <title>Markstoria - Quản lý thư viện</title>
     <script src="theme-init.js"></script>
     <link rel="stylesheet" href="dashboard.css" />
   </head>
@@ -40,7 +40,7 @@
     <header class="app-header">
       <div class="brand">
         <div class="brand-mark"><svg><use href="#i-bookmark"></use></svg></div>
-        <div><strong>Bookmark Lens</strong><span>Thư viện của bạn</span></div>
+        <div><strong>Markstoria</strong><span>Thư viện của bạn</span></div>
       </div>
       <div class="global-search">
         <svg><use href="#i-search"></use></svg>
@@ -144,7 +144,7 @@
       </section>
 
       <section id="automationView" class="view page-view">
-        <div class="page-heading"><div><h1>Tự động sắp xếp</h1><p>Tạo luật theo domain, tiêu đề, URL, thư mục hoặc tag để Bookmark Lens tự di chuyển và gắn nhãn.</p></div><button id="applyRulesAll" class="button-primary" type="button"><svg><use href="#i-check"></use></svg>Áp dụng toàn bộ</button></div>
+        <div class="page-heading"><div><h1>Tự động sắp xếp</h1><p>Tạo luật theo domain, tiêu đề, URL, thư mục hoặc tag để Markstoria tự di chuyển và gắn nhãn.</p></div><button id="applyRulesAll" class="button-primary" type="button"><svg><use href="#i-check"></use></svg>Áp dụng toàn bộ</button></div>
         <div class="automation-grid">
           <section class="settings-section automation-builder">
             <h2>Tạo luật</h2>
@@ -185,7 +185,7 @@
         <div class="page-heading"><div><h1>Kho ẩn</h1><p>Lưu trang riêng tư trong vault mã hóa. Link ẩn không xuất hiện trong Chrome bookmarks.</p></div><div class="button-row"><button id="hiddenSaveCurrent" class="button-primary" type="button"><svg><use href="#i-plus"></use></svg>Lưu tab hiện tại</button><button id="hiddenLock" class="button-secondary" type="button"><svg><use href="#i-lock"></use></svg>Khóa</button></div></div>
         <section id="hiddenLocked" class="settings-section hidden-lock-panel">
           <h2>Mở khóa Kho ẩn</h2>
-          <p>Nếu đây là lần đầu dùng, hãy tạo mật khẩu. Bookmark Lens không thể khôi phục mật khẩu nếu bạn quên.</p>
+          <p>Nếu đây là lần đầu dùng, hãy tạo mật khẩu. Markstoria không thể khôi phục mật khẩu nếu bạn quên.</p>
           <div class="button-row"><button id="hiddenUnlock" class="button-primary" type="button">Mở khóa / Tạo mật khẩu</button></div>
         </section>
         <section id="hiddenUnlocked" class="settings-section hidden-vault-panel is-hidden">
@@ -202,7 +202,7 @@
             <div class="button-row"><button id="exportJson" class="button-primary" type="button"><svg><use href="#i-download"></use></svg>Xuất JSON đầy đủ</button><button id="exportHtml" class="button-secondary" type="button"><svg><use href="#i-download"></use></svg>Xuất HTML</button></div>
           </section>
           <section class="settings-section">
-            <h2>Nhập dữ liệu</h2><p>Hỗ trợ file JSON của Bookmark Lens và file bookmark HTML từ trình duyệt.</p>
+            <h2>Nhập dữ liệu</h2><p>Hỗ trợ file JSON của Markstoria và file bookmark HTML từ trình duyệt.</p>
             <label class="file-button"><svg><use href="#i-upload"></use></svg>Chọn file để nhập<input id="importFile" type="file" accept=".json,.html,.htm,application/json,text/html" /></label>
           </section>
           <section class="settings-section restore-section">
@@ -225,7 +225,7 @@
       </section>
     </main>
 
-    <footer class="dashboard-footer">Bookmark Lens · Developed by <strong>Kenzy</strong></footer>
+    <footer class="dashboard-footer">Markstoria · Developed by <strong>Kenzy</strong></footer>
 
     <dialog id="editorDialog" class="dialog editor-dialog">
       <form id="editorForm" method="dialog">
@@ -280,7 +280,7 @@
 
     <dialog id="helpDialog" class="dialog">
       <form method="dialog">
-        <div class="dialog-head"><div><h2>Trợ giúp nhanh</h2><p>Các thao tác nhanh nhất khi dùng Bookmark Lens.</p></div><button class="icon-button close-dialog" type="button" aria-label="Đóng"><svg><use href="#i-x"></use></svg></button></div>
+        <div class="dialog-head"><div><h2>Trợ giúp nhanh</h2><p>Các thao tác nhanh nhất khi dùng Markstoria.</p></div><button class="icon-button close-dialog" type="button" aria-label="Đóng"><svg><use href="#i-x"></use></svg></button></div>
         <div class="help-grid">
           <div><strong>Tìm theo site</strong><span><code>site:github.com</code></span></div>
           <div><strong>Tìm theo thư mục</strong><span><code>folder:"Công việc"</code></span></div>
@@ -294,11 +294,11 @@
 
     <dialog id="onboardingDialog" class="dialog onboarding-dialog">
       <form id="onboardingForm" method="dialog">
-        <div class="dialog-head"><div><h2>Chào mừng đến Bookmark Lens</h2><p>Bắt đầu nhanh với 4 thao tác hữu ích nhất.</p></div><button class="icon-button close-dialog" type="button" aria-label="Đóng"><svg><use href="#i-x"></use></svg></button></div>
+        <div class="dialog-head"><div><h2>Chào mừng đến Markstoria</h2><p>Bắt đầu nhanh với 4 thao tác hữu ích nhất.</p></div><button class="icon-button close-dialog" type="button" aria-label="Đóng"><svg><use href="#i-x"></use></svg></button></div>
         <div class="help-grid">
           <div><strong>Tìm và lọc</strong><span>Dùng ô tìm kiếm, domain chip hoặc cú pháp <code>site:</code>, <code>tag:</code>.</span></div>
           <div><strong>Rule tự động</strong><span>Tạo luật để tự di chuyển/gắn tag bookmark theo domain hoặc keyword.</span></div>
-          <div><strong>Backup và undo</strong><span>Trước khi xóa hàng loạt, Bookmark Lens tạo điểm phục hồi và hỗ trợ undo nhiều bước.</span></div>
+          <div><strong>Backup và undo</strong><span>Trước khi xóa hàng loạt, Markstoria tạo điểm phục hồi và hỗ trợ undo nhiều bước.</span></div>
           <div><strong>Side Panel</strong><span>Mở panel cạnh để lưu, tìm và kéo thả bookmark mà không rời tab hiện tại.</span></div>
         </div>
         <div class="dialog-actions"><button id="finishOnboarding" class="button-primary" type="submit">Bắt đầu dùng</button></div>

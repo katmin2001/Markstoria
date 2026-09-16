@@ -1,10 +1,10 @@
-# Bookmark Lens — Chrome Bookmark Manager Extension
+# Markstoria — Chrome Bookmark Manager Extension
 
 > A powerful Chrome extension to **search, filter, tag, and organize** your entire bookmark library — with fuzzy search, duplicate detection, a broken-link checker, workspaces, and a full-page dashboard.
 >
 > *Tiện ích Chrome giúp tìm, lọc, gắn tag và tổ chức toàn bộ thư viện bookmark: tìm gần đúng, phát hiện trùng lặp, kiểm tra liên kết hỏng, workspace và dashboard toàn màn hình.*
 
-![Bookmark Lens — Chrome bookmark manager dashboard with search, filters, and tags](image.png)
+![Markstoria — Chrome bookmark manager dashboard with search, filters, and tags](image.png)
 
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue)
 ![Platform](https://img.shields.io/badge/platform-Chrome-brightgreen)
@@ -33,7 +33,7 @@ Tiện ích Chrome giúp tìm, lọc, tổ chức và bảo trì toàn bộ thư
 1. Mở `chrome://extensions/` trong Google Chrome.
 2. Bật **Chế độ dành cho nhà phát triển**.
 3. Chọn **Tải tiện ích đã giải nén**.
-4. Chọn thư mục `bookmark-lens` này.
+4. Chọn thư mục `markstoria` này.
 
 ### Tính năng chính
 
@@ -78,24 +78,24 @@ Tiện ích Chrome giúp tìm, lọc, tổ chức và bảo trì toàn bộ thư
 - `history`: hỗ trợ sắp xếp theo lượt/lần truy cập.
 - `tabs`: lưu tab hiện tại hoặc toàn bộ cửa sổ.
 - `contextMenus`: cung cấp menu chuột phải.
-- `sidePanel`: mở Bookmark Lens trong panel cạnh của Chrome.
+- `sidePanel`: mở Markstoria trong panel cạnh của Chrome.
 - `notifications`: báo kết quả khi lưu bookmark bằng phím tắt hoặc menu chuột phải.
 - Quyền truy cập `http://*/*` và `https://*/*` là **tùy chọn**, chỉ được hỏi khi bắt đầu kiểm tra liên kết.
 
-> Nếu `Alt+Shift+B` không chạy sau khi cài lại, mở `chrome://extensions/shortcuts` và kiểm tra shortcut **Lưu trang hiện tại vào Bookmark Lens** đã được gán đúng chưa.
+> Nếu `Alt+Shift+B` không chạy sau khi cài lại, mở `chrome://extensions/shortcuts` và kiểm tra shortcut **Lưu trang hiện tại vào Markstoria** đã được gán đúng chưa.
 
 ---
 
 ## 🇬🇧 English
 
-**Bookmark Lens** is a Chrome extension that helps you search, filter, organize, and maintain your entire bookmark library. Use the **popup** for quick actions, the **Side Panel** to work side-by-side with any page, and the **full-page dashboard** for large clean-up jobs.
+**Markstoria** is a Chrome extension that helps you search, filter, organize, and maintain your entire bookmark library. Use the **popup** for quick actions, the **Side Panel** to work side-by-side with any page, and the **full-page dashboard** for large clean-up jobs.
 
 ### Installation
 
 1. Open `chrome://extensions/` in Google Chrome.
 2. Enable **Developer mode**.
 3. Click **Load unpacked**.
-4. Select this `bookmark-lens` folder.
+4. Select this `markstoria` folder.
 
 ### Key features
 
@@ -140,11 +140,11 @@ Tiện ích Chrome giúp tìm, lọc, tổ chức và bảo trì toàn bộ thư
 - `history` — sort by visit count / last visit.
 - `tabs` — save the current tab or the whole window.
 - `contextMenus` — provide the right-click menu.
-- `sidePanel` — open Bookmark Lens in Chrome's side panel.
+- `sidePanel` — open Markstoria in Chrome's side panel.
 - `notifications` — confirm saves made via shortcut or context menu.
 - `http://*/*` and `https://*/*` are **optional**, requested only when you start the link checker.
 
-> If `Alt+Shift+B` doesn't work after reinstalling, open `chrome://extensions/shortcuts` and check that the **Save current page to Bookmark Lens** shortcut is assigned.
+> If `Alt+Shift+B` doesn't work after reinstalling, open `chrome://extensions/shortcuts` and check that the **Save current page to Markstoria** shortcut is assigned.
 
 ---
 

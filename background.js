@@ -168,7 +168,7 @@ async function notifySaveResult(result) {
   if (!chrome.notifications?.create) return;
   const title = message(settings, status);
   const detail = result?.title || result?.url || message(settings, "shortcutHint");
-  chrome.notifications.create(`bookmark-lens-${Date.now()}`, {
+  chrome.notifications.create(`markstoria-${Date.now()}`, {
     type: "basic",
     iconUrl: "icons/icon-128.png",
     title,
@@ -189,9 +189,9 @@ async function saveTab(tab) {
 
 function createMenus() {
   chrome.contextMenus.removeAll(() => {
-    chrome.contextMenus.create({ id: "bookmark-lens-save", title: "Lưu vào Bookmark Lens", contexts: ["page", "link"] });
-    chrome.contextMenus.create({ id: "bookmark-lens-related", title: "Tìm bookmark cùng tên miền", contexts: ["page", "link"] });
-    chrome.contextMenus.create({ id: "bookmark-lens-panel", title: "Mở Bookmark Lens Side Panel", contexts: ["page"] });
+    chrome.contextMenus.create({ id: "markstoria-save", title: "Lưu vào Markstoria", contexts: ["page", "link"] });
+    chrome.contextMenus.create({ id: "markstoria-related", title: "Tìm bookmark cùng tên miền", contexts: ["page", "link"] });
+    chrome.contextMenus.create({ id: "markstoria-panel", title: "Mở Markstoria Side Panel", contexts: ["page"] });
     void chrome.runtime.lastError;
   });
 }
@@ -205,16 +205,16 @@ chrome.runtime.onStartup.addListener(createMenus);
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   const url = info.linkUrl || info.pageUrl || tab?.url;
-  if (info.menuItemId === "bookmark-lens-save") {
+  if (info.menuItemId === "markstoria-save") {
     const result = await saveTab({ url, title: info.linkUrl ? info.selectionText || url : tab?.title });
     await notifySaveResult(result);
   }
-  if (info.menuItemId === "bookmark-lens-related" && url) {
+  if (info.menuItemId === "markstoria-related" && url) {
     let domain = "";
     try { domain = new URL(url).hostname.replace(/^www\./, ""); } catch { domain = url; }
     chrome.tabs.create({ url: chrome.runtime.getURL(`dashboard.html?q=${encodeURIComponent(`site:${domain}`)}`) });
   }
-  if (info.menuItemId === "bookmark-lens-panel") await openSidePanel();
+  if (info.menuItemId === "markstoria-panel") await openSidePanel();
 });
 
 chrome.commands.onCommand.addListener(async (command) => {

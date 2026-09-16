@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Bookmark Lens",
+  "name": "Markstoria",
   "description": "Tìm, lọc, sắp xếp và quản lý bookmark trong Chrome nhanh hơn.",
   "version": "3.2.0",
   "permissions": ["bookmarks", "storage", "favicon", "tabs", "history", "contextMenus", "sidePanel", "notifications"],
@@ -9,7 +9,7 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Bookmark Lens",
+    "default_title": "Markstoria",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",
@@ -33,11 +33,11 @@
     },
     "save-current-page": {
       "suggested_key": { "default": "Alt+Shift+B" },
-      "description": "Lưu trang hiện tại vào Bookmark Lens"
+      "description": "Lưu trang hiện tại vào Markstoria"
     },
     "open-dashboard": {
       "suggested_key": { "default": "Alt+Shift+L" },
-      "description": "Mở trang quản lý Bookmark Lens"
+      "description": "Mở trang quản lý Markstoria"
     }
   }
 }

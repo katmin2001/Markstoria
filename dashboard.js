@@ -695,8 +695,8 @@ function downloadBlob(content, type, filename) {
 }
 
 function exportJson() {
-  const payload = { format: "bookmark-lens", version: 2, exportedAt: new Date().toISOString(), tree: state.tree, metadata: state.metadata };
-  downloadBlob(JSON.stringify(payload, null, 2), "application/json", `bookmark-lens-${new Date().toISOString().slice(0, 10)}.json`);
+  const payload = { format: "markstoria", version: 2, exportedAt: new Date().toISOString(), tree: state.tree, metadata: state.metadata };
+  downloadBlob(JSON.stringify(payload, null, 2), "application/json", `markstoria-${new Date().toISOString().slice(0, 10)}.json`);
   showToast("Đã tạo bản sao lưu JSON");
 }
 
@@ -704,11 +704,11 @@ function exportHtmlNode(node, depth = 1) {
   const indent = "    ".repeat(depth);
   if (node.url) return `${indent}<DT><A HREF="${BL.escapeHtml(node.url)}" ADD_DATE="${Math.floor((node.dateAdded || Date.now()) / 1000)}">${BL.escapeHtml(node.title)}</A>`;
   const children = (node.children || []).map((child) => exportHtmlNode(child, depth + 1)).join("\n");
-  return `${indent}<DT><H3>${BL.escapeHtml(node.title || "Bookmark Lens")}</H3>\n${indent}<DL><p>\n${children}\n${indent}</DL><p>`;
+  return `${indent}<DT><H3>${BL.escapeHtml(node.title || "Markstoria")}</H3>\n${indent}<DL><p>\n${children}\n${indent}</DL><p>`;
 }
 
 function exportHtml() {
-  const html = `<!DOCTYPE NETSCAPE-Bookmark-file-1>\n<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">\n<TITLE>Bookmark Lens</TITLE>\n<H1>Bookmark Lens</H1>\n<DL><p>\n${(state.tree[0]?.children || []).map((node) => exportHtmlNode(node)).join("\n")}\n</DL><p>`;
+  const html = `<!DOCTYPE NETSCAPE-Bookmark-file-1>\n<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">\n<TITLE>Markstoria</TITLE>\n<H1>Markstoria</H1>\n<DL><p>\n${(state.tree[0]?.children || []).map((node) => exportHtmlNode(node)).join("\n")}\n</DL><p>`;
   downloadBlob(html, "text/html", `bookmarks-${new Date().toISOString().slice(0, 10)}.html`);
   showToast("Đã tạo file bookmark HTML");
 }
@@ -745,10 +745,10 @@ async function importHtmlList(list, parentId) {
 async function importFile(file) {
   const text = await file.text();
   const baseParent = state.tree[0]?.children?.[1]?.id || state.tree[0]?.children?.[0]?.id || "1";
-  const root = await BL.chromeCall((done) => chrome.bookmarks.create({ parentId: baseParent, title: `Bookmark Lens Import ${new Date().toLocaleDateString("vi-VN")}` }, done));
+  const root = await BL.chromeCall((done) => chrome.bookmarks.create({ parentId: baseParent, title: `Markstoria Import ${new Date().toLocaleDateString("vi-VN")}` }, done));
   if (file.name.toLowerCase().endsWith(".json")) {
     const data = JSON.parse(text);
-    if (data.format !== "bookmark-lens" || !data.tree) throw new Error("File JSON không đúng định dạng Bookmark Lens");
+    if (!["markstoria", "bookmark-lens"].includes(data.format) || !data.tree) throw new Error("File JSON không đúng định dạng Markstoria");
     const newMetadata = await importTreeNodes(data.tree[0]?.children || [], root.id, data.metadata || {}, {});
     await BL.saveMetadata({ ...state.metadata, ...newMetadata });
   } else {
