@@ -62,6 +62,12 @@ h1, p { margin: 0; }
 .chips:empty { display: none; }
 .chip { height: 30px; flex: 0 0 auto; padding: 0 10px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); color: var(--muted); font-size: 11px; font-weight: 750; }
 .chip:hover, .chip.is-active { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); }
+.folder-drop-zone { padding: 10px 14px 0; }
+.drop-title { margin-bottom: 7px; color: var(--muted); font-size: 10px; font-weight: 850; text-transform: uppercase; }
+.folder-targets { display: grid; max-height: 118px; overflow: auto; gap: 5px; }
+.folder-target { display: flex; min-height: 30px; align-items: center; justify-content: space-between; gap: 8px; padding: 0 9px; border: 1px solid var(--border); border-radius: 7px; background: var(--bg); color: var(--muted); font-size: 11px; }
+.folder-target span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.folder-target.is-drop-target { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); }
 .results { display: grid; align-content: start; padding-top: 10px; }
 .result { display: grid; grid-template-columns: 32px minmax(0,1fr) 30px; gap: 9px; align-items: center; min-height: 62px; padding: 8px 14px; border-top: 1px solid var(--border); background: var(--surface); }
 .result:hover { background: var(--surface-hover); }

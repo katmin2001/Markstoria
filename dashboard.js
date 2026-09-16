@@ -15,8 +15,16 @@ const state = {
   domain: "all",
   sort: "newest",
   visibleLimit: 120,
+  virtualStart: 0,
+  virtualRowHeight: 70,
+  indexedMatchIds: null,
+  indexTimer: null,
+  searchTimer: null,
   draggedId: null,
   undoStack: [],
+  pendingRulePreview: null,
+  vaultKey: null,
+  hiddenItems: [],
   confirmResolver: null,
   toastTimer: null,
   lastBackup: null,
@@ -38,11 +46,11 @@ const els = {
   statCards: $("#statCards"), domainChart: $("#domainChart"), monthChart: $("#monthChart"),
   folderStats: $("#folderStats"), exportJson: $("#exportJson"), exportHtml: $("#exportHtml"),
   importFile: $("#importFile"), defaultSort: $("#defaultSort"), themeSetting: $("#themeSetting"),
-  syncSettings: $("#syncSettings"), autoOrganizeNew: $("#autoOrganizeNew"), compactMode: $("#compactMode"), pageSize: $("#pageSize"),
+  syncSettings: $("#syncSettings"), syncMetadata: $("#syncMetadata"), autoOrganizeNew: $("#autoOrganizeNew"), compactMode: $("#compactMode"), virtualList: $("#virtualList"), pageSize: $("#pageSize"),
   autoRuleSummary: $("#autoRuleSummary"), ruleList: $("#ruleList"), ruleSuggestionList: $("#ruleSuggestionList"),
   ruleName: $("#ruleName"), ruleField: $("#ruleField"), ruleMatch: $("#ruleMatch"), ruleValue: $("#ruleValue"),
   ruleFolder: $("#ruleFolder"), ruleTags: $("#ruleTags"), ruleReadStatus: $("#ruleReadStatus"),
-  addRule: $("#addRule"), applyRulesAll: $("#applyRulesAll"), applyRulesSelected: $("#applyRulesSelected"),
+  addRule: $("#addRule"), applyRulesAll: $("#applyRulesAll"), applyRulesSelected: $("#applyRulesSelected"), applyRuleTemplate: $("#applyRuleTemplate"),
   workspaceName: $("#workspaceName"), saveWorkspace: $("#saveWorkspace"), workspaceList: $("#workspaceList"),
   editorDialog: $("#editorDialog"), editorForm: $("#editorForm"), editorId: $("#editorId"),
   editorTitle: $("#editorTitle"), editorUrl: $("#editorUrl"), editorFolder: $("#editorFolder"),
@@ -55,7 +63,11 @@ const els = {
   addTags: $("#addTags"), addUnread: $("#addUnread"), addDuplicateHint: $("#addDuplicateHint"),
   addTagColor: $("#addTagColor"), saveWindow: $("#saveWindow"), confirmDialog: $("#confirmDialog"), confirmForm: $("#confirmForm"),
   confirmTitle: $("#confirmTitle"), confirmMessage: $("#confirmMessage"), confirmAction: $("#confirmAction"),
+  rulePreviewDialog: $("#rulePreviewDialog"), rulePreviewForm: $("#rulePreviewForm"), rulePreviewSummary: $("#rulePreviewSummary"), rulePreviewList: $("#rulePreviewList"), confirmRulePreview: $("#confirmRulePreview"),
   commandDialog: $("#commandDialog"), commandInput: $("#commandInput"), commandList: $("#commandList"), helpDialog: $("#helpDialog"),
+  onboardingDialog: $("#onboardingDialog"), onboardingForm: $("#onboardingForm"), finishOnboarding: $("#finishOnboarding"),
+  hiddenLocked: $("#hiddenLocked"), hiddenUnlocked: $("#hiddenUnlocked"), hiddenUnlock: $("#hiddenUnlock"),
+  hiddenLock: $("#hiddenLock"), hiddenSaveCurrent: $("#hiddenSaveCurrent"), hiddenSummary: $("#hiddenSummary"), hiddenList: $("#hiddenList"),
   toast: $("#toast"), toastMessage: $("#toastMessage"), undoButton: $("#undoButton"),
   lastBackupInfo: $("#lastBackupInfo"), restoreBackup: $("#restoreBackup"),
 };
@@ -88,7 +100,30 @@ async function refreshLibrary(options = {}) {
   state.selected = new Set([...previousSelected].filter((id) => state.bookmarks.some((item) => item.id === id)));
   state.duplicateGroups = BL.findDuplicateGroups(state.bookmarks);
   state.duplicateIds = new Set(state.duplicateGroups.flat().map((item) => item.id));
+  scheduleIndexRebuild();
   renderAll();
+}
+
+function scheduleIndexRebuild() {
+  clearTimeout(state.indexTimer);
+  state.indexTimer = setTimeout(() => {
+    BL.rebuildSearchIndex?.(state.bookmarks).catch(() => {});
+  }, 250);
+}
+
+function scheduleIndexedSearch() {
+  clearTimeout(state.searchTimer);
+  state.indexedMatchIds = null;
+  const query = state.query.trim();
+  if (!query) { renderLibrary(); return; }
+  state.searchTimer = setTimeout(async () => {
+    try {
+      state.indexedMatchIds = await BL.searchBookmarkIndex?.(query, 10000);
+    } catch {
+      state.indexedMatchIds = null;
+    }
+    renderLibrary();
+  }, 90);
 }
 
 function smartDefinitions() {
@@ -165,6 +200,7 @@ function matchesQuery(bookmark) {
 
 function filteredBookmarks() {
   const items = state.bookmarks.filter((bookmark) => {
+    if (state.indexedMatchIds && !state.indexedMatchIds.has(bookmark.id)) return false;
     const folderMatch = state.folderId === "all" || bookmark.ancestorIds.includes(state.folderId);
     const domainMatch = state.domain === "all" || bookmark.domain === state.domain;
     return folderMatch && domainMatch && matchesSmart(bookmark) && matchesQuery(bookmark);
@@ -205,12 +241,31 @@ function bookmarkRow(bookmark) {
 
 function renderLibrary() {
   const filtered = filteredBookmarks();
-  const visible = filtered.slice(0, state.visibleLimit);
+  const useVirtual = Boolean(state.settings.virtualList) && filtered.length > 600;
+  const pageLimit = useVirtual ? filtered.length : state.visibleLimit;
+  const pageItems = filtered.slice(0, pageLimit);
+  let visible = pageItems;
+  let topSpacer = 0;
+  let bottomSpacer = 0;
+  if (useVirtual) {
+    const viewportRows = Math.ceil(innerHeight / state.virtualRowHeight) + 10;
+    const maxStart = Math.max(0, pageItems.length - viewportRows);
+    state.virtualStart = Math.min(state.virtualStart, maxStart);
+    visible = pageItems.slice(state.virtualStart, state.virtualStart + viewportRows);
+    topSpacer = state.virtualStart * state.virtualRowHeight;
+    bottomSpacer = Math.max(0, (pageItems.length - state.virtualStart - visible.length) * state.virtualRowHeight);
+    document.documentElement.dataset.virtual = "true";
+  } else {
+    state.virtualStart = 0;
+    document.documentElement.dataset.virtual = "false";
+  }
   els.viewTitle.textContent = currentViewTitle();
   els.resultCount.textContent = `${filtered.length.toLocaleString("vi-VN")} bookmark${state.query ? ` khớp “${state.query}”` : ""}`;
-  els.bookmarkList.innerHTML = visible.length ? visible.map(bookmarkRow).join("") : `<div class="empty-state"><div class="empty-icon"><svg><use href="#i-search"></use></svg></div><h2>Không tìm thấy bookmark</h2><p>Thử từ khóa ngắn hơn, cú pháp khác hoặc chọn một thư mục khác.</p></div>`;
-  els.loadMore.classList.toggle("is-hidden", visible.length >= filtered.length);
-  if (visible.length < filtered.length) els.loadMore.textContent = `Xem thêm ${Math.min(state.settings.pageSize || 120, filtered.length - visible.length)} bookmark`;
+  els.bookmarkList.innerHTML = visible.length
+    ? `${topSpacer ? `<div class="virtual-spacer" style="height:${topSpacer}px"></div>` : ""}${visible.map(bookmarkRow).join("")}${bottomSpacer ? `<div class="virtual-spacer" style="height:${bottomSpacer}px"></div>` : ""}`
+    : `<div class="empty-state"><div class="empty-icon"><svg><use href="#i-search"></use></svg></div><h2>Không tìm thấy bookmark</h2><p>Thử từ khóa ngắn hơn, cú pháp khác hoặc chọn một thư mục khác.</p></div>`;
+  els.loadMore.classList.toggle("is-hidden", useVirtual || pageLimit >= filtered.length);
+  if (!useVirtual && pageLimit < filtered.length) els.loadMore.textContent = `Xem thêm ${Math.min(state.settings.pageSize || 120, filtered.length - pageLimit)} bookmark`;
   els.clearSearch.classList.toggle("is-hidden", !state.query);
   els.selectAll.checked = filtered.length > 0 && filtered.every((item) => state.selected.has(item.id));
   els.selectAll.indeterminate = state.selected.size > 0 && !els.selectAll.checked;
@@ -273,10 +328,13 @@ function renderSettings() {
   els.defaultSort.value = state.settings.defaultSort || "newest";
   els.themeSetting.value = state.settings.theme || "system";
   els.syncSettings.checked = Boolean(state.settings.syncEnabled);
+  els.syncMetadata.checked = Boolean(state.settings.syncMetadata);
   els.autoOrganizeNew.checked = Boolean(state.settings.autoOrganizeNew);
   els.compactMode.checked = Boolean(state.settings.compactMode);
+  els.virtualList.checked = state.settings.virtualList !== false;
   els.pageSize.value = String(state.settings.pageSize || 120);
   document.documentElement.dataset.compact = String(Boolean(state.settings.compactMode));
+  document.documentElement.dataset.virtual = String(state.settings.virtualList !== false);
   els.searchSuggestions.innerHTML = (state.settings.searchHistory || []).map((term) => `<option value="${BL.escapeHtml(term)}"></option>`).join("");
   const backupCount = state.lastBackup?.items?.length || 0;
   els.restoreBackup.disabled = backupCount === 0;
@@ -303,7 +361,7 @@ function renderAutomation() {
 
   const suggestions = BL.suggestRules(state.bookmarks, state.folders);
   els.ruleSuggestionList.innerHTML = suggestions.length ? suggestions.map((rule) => `
-    <div class="suggestion-card" data-suggest="${BL.escapeHtml(rule.value)}">
+    <div class="suggestion-card" data-suggest="${BL.escapeHtml(rule.value)}" data-field="${BL.escapeHtml(rule.field)}" data-match="${BL.escapeHtml(rule.match)}" data-tags="${BL.escapeHtml((rule.tags || []).join(","))}">
       <div><strong>${BL.escapeHtml(rule.name)}</strong><span>${rule.count} bookmark từ ${BL.escapeHtml(rule.value)}</span></div>
       <div class="rule-actions"><button data-suggest-action="use" type="button">Dùng</button><button data-suggest-action="filter" type="button">Lọc</button></div>
     </div>`).join("") : `<p class="muted-note">Chưa có domain nào đủ nổi bật để gợi ý.</p>`;
@@ -311,9 +369,65 @@ function renderAutomation() {
   const workspaces = state.settings.workspaces || [];
   els.workspaceList.innerHTML = workspaces.length ? workspaces.map((workspace) => `
     <div class="workspace-card" data-workspace-id="${BL.escapeHtml(workspace.id)}">
-      <div><strong>${BL.escapeHtml(workspace.name)}</strong><span>${BL.escapeHtml(workspace.query || "Không có từ khóa")} · ${BL.escapeHtml(workspace.domain === "all" ? "mọi domain" : workspace.domain)}</span></div>
-      <div class="rule-actions"><button data-workspace-action="open" type="button">Mở</button><button data-workspace-action="delete" type="button">Xóa</button></div>
+      <div><strong>${BL.escapeHtml(workspace.name)}</strong><span>${BL.escapeHtml(workspace.query || "Không có từ khóa")} · ${BL.escapeHtml(workspace.domain === "all" ? "mọi domain" : workspace.domain)} · ${(workspace.bookmarkIds || []).length} bookmark</span></div>
+      <div class="rule-actions"><button data-workspace-action="open" type="button">Mở</button><button data-workspace-action="tabs" type="button">Mở tabs</button><button data-workspace-action="delete" type="button">Xóa</button></div>
     </div>`).join("") : `<p class="muted-note">Chưa lưu workspace nào.</p>`;
+}
+
+function ruleTemplates() {
+  return [
+    { name: "GitHub vào Development", field: "domain", match: "contains", value: "github.com", tags: ["dev"], folderName: "Development" },
+    { name: "YouTube vào Video", field: "domain", match: "contains", value: "youtube.com", tags: ["video"], folderName: "Video" },
+    { name: "Docs vào Tài liệu", field: "url", match: "contains", value: "docs", tags: ["docs"], folderName: "Tài liệu" },
+    { name: "Bài viết dài vào Read Later", field: "title", match: "contains", value: "guide", tags: ["read later"], readStatus: "unread", folderName: "Read Later" },
+  ];
+}
+
+function ruleChangesForItems(items) {
+  const rules = (state.settings.autoRules || []).map(BL.normalizeRule).filter((rule) => rule.enabled);
+  const changes = [];
+  for (const item of items) {
+    const matching = rules.filter((rule) => BL.ruleMatchesBookmark(rule, item));
+    if (!matching.length) continue;
+    const beforeMeta = { ...(state.metadata[item.id] || {}) };
+    const targetFolder = matching.find((rule) => rule.folderId)?.folderId || item.parentId;
+    const tags = new Set(beforeMeta.tags || []);
+    matching.flatMap((rule) => rule.tags || []).forEach((tag) => tags.add(tag));
+    const readStatus = [...matching].reverse().find((rule) => rule.readStatus)?.readStatus || beforeMeta.readStatus || "read";
+    const afterMeta = { ...beforeMeta, tags: [...tags], readStatus };
+    const folderChanged = targetFolder !== item.parentId;
+    const tagsChanged = JSON.stringify(beforeMeta.tags || []) !== JSON.stringify(afterMeta.tags || []);
+    const statusChanged = (beforeMeta.readStatus || "read") !== afterMeta.readStatus;
+    if (!folderChanged && !tagsChanged && !statusChanged) continue;
+    changes.push({
+      item,
+      beforeMeta,
+      beforeMove: { id: item.id, parentId: item.parentId, index: item.index },
+      targetFolder,
+      afterMeta,
+      matching,
+    });
+  }
+  return changes;
+}
+
+function showRulePreview(items, message = "Đã áp dụng luật tự động") {
+  const changes = ruleChangesForItems(items);
+  if (!(state.settings.autoRules || []).some((rule) => rule.enabled !== false)) { showToast("Chưa có luật đang bật"); return; }
+  if (!changes.length) { showToast("Không có bookmark nào khớp luật"); return; }
+  state.pendingRulePreview = { changes, message };
+  els.rulePreviewSummary.textContent = `${changes.length.toLocaleString("vi-VN")} bookmark sẽ được cập nhật.`;
+  els.rulePreviewList.innerHTML = changes.slice(0, 500).map((change) => {
+    const target = state.folders.find((folder) => folder.id === change.targetFolder)?.path || change.item.folderPath;
+    const ruleNames = change.matching.map((rule) => rule.name).join(", ");
+    return `<div class="preview-row">
+      <strong title="${BL.escapeHtml(change.item.url)}">${BL.escapeHtml(change.item.title)}<small>${BL.escapeHtml(change.item.domain)}</small></strong>
+      <span title="${BL.escapeHtml(change.item.folderPath)}">${BL.escapeHtml(change.item.folderPath)}<small>hiện tại</small></span>
+      <span title="${BL.escapeHtml(target)}"><b>${BL.escapeHtml(target)}</b><small>${BL.escapeHtml(ruleNames)}</small></span>
+    </div>`;
+  }).join("") + (changes.length > 500 ? `<div class="preview-row"><strong>+${changes.length - 500} bookmark khác</strong><span></span><span></span></div>` : "");
+  els.rulePreviewDialog.showModal();
+  window.BookmarkLensI18n?.apply(els.rulePreviewDialog);
 }
 
 function renderAll() {
@@ -324,6 +438,7 @@ function renderAll() {
   renderStats();
   renderSettings();
   renderAutomation();
+  renderHiddenVault();
   const options = folderOptions(state.settings.lastFolderId);
   els.editorFolder.innerHTML = options;
   els.moveFolder.innerHTML = options;
@@ -734,36 +849,20 @@ async function saveRuleFromForm() {
   });
 }
 
-async function applyRulesToItems(items, message = "Đã áp dụng luật tự động") {
-  const rules = (state.settings.autoRules || []).map(BL.normalizeRule).filter((rule) => rule.enabled);
-  if (!rules.length) { showToast("Chưa có luật đang bật"); return; }
-  const changes = [];
-  for (const item of items) {
-    const matching = rules.filter((rule) => BL.ruleMatchesBookmark(rule, item));
-    if (!matching.length) continue;
-    const beforeMeta = { ...(state.metadata[item.id] || {}) };
-    const beforeMove = { id: item.id, parentId: item.parentId, index: item.index };
-    const targetFolder = matching.find((rule) => rule.folderId)?.folderId;
-    const tags = new Set(beforeMeta.tags || []);
-    matching.flatMap((rule) => rule.tags || []).forEach((tag) => tags.add(tag));
-    const readStatus = [...matching].reverse().find((rule) => rule.readStatus)?.readStatus;
-    state.metadata[item.id] = {
-      ...beforeMeta,
-      tags: [...tags],
-      ...(readStatus ? { readStatus } : {}),
-    };
-    if (targetFolder && targetFolder !== item.parentId) {
-      await BL.chromeCall((done) => chrome.bookmarks.move(item.id, { parentId: targetFolder }, done));
-    }
-    changes.push({ beforeMeta, beforeMove });
-  }
+async function applyRuleChanges(changes, message = "Đã áp dụng luật tự động") {
   if (!changes.length) { showToast("Không có bookmark nào khớp luật"); return; }
+  for (const change of changes) {
+    state.metadata[change.item.id] = change.afterMeta;
+    if (change.targetFolder && change.targetFolder !== change.item.parentId) {
+      await BL.chromeCall((done) => chrome.bookmarks.move(change.item.id, { parentId: change.targetFolder }, done));
+    }
+  }
   await BL.saveMetadata(state.metadata);
   await refreshLibrary({ keepSelection: true });
   setUndo(`${message}: ${changes.length} bookmark`, async () => {
     const metadata = await BL.loadMetadata();
     for (const change of changes.sort((a, b) => a.beforeMove.index - b.beforeMove.index)) {
-      metadata[change.beforeMove.id] = change.beforeMeta;
+      metadata[change.item.id] = change.beforeMeta;
       await BL.chromeCall((done) => chrome.bookmarks.move(change.beforeMove.id, { parentId: change.beforeMove.parentId, index: change.beforeMove.index }, done)).catch(() => {});
     }
     await BL.saveMetadata(metadata);
@@ -773,6 +872,7 @@ async function applyRulesToItems(items, message = "Đã áp dụng luật tự �
 
 function saveWorkspace() {
   const name = els.workspaceName.value.trim() || currentViewTitle();
+  const bookmarkIds = filteredBookmarks().slice(0, 80).map((item) => item.id);
   const workspace = {
     id: `workspace-${Date.now()}`,
     name,
@@ -781,6 +881,7 @@ function saveWorkspace() {
     folderId: state.folderId,
     domain: state.domain,
     sort: state.sort,
+    bookmarkIds,
   };
   state.settings.workspaces = [workspace, ...(state.settings.workspaces || [])].slice(0, 12);
   els.workspaceName.value = "";
@@ -801,12 +902,21 @@ function openWorkspace(workspace) {
   renderAll();
 }
 
+async function openWorkspaceTabs(workspace) {
+  const ids = new Set(workspace.bookmarkIds || []);
+  const items = ids.size ? state.bookmarks.filter((item) => ids.has(item.id)) : filteredBookmarks();
+  if (!items.length) { showToast("Workspace chưa có bookmark để mở"); return; }
+  if (items.length > 20 && !await askConfirm("Mở nhiều tab?", `Bạn sắp mở ${items.length} tab từ workspace.`, "Mở tất cả")) return;
+  items.slice(0, 80).forEach((item) => chrome.tabs.create({ url: item.url, active: false }));
+  showToast(`Đã mở ${Math.min(items.length, 80)} tab từ workspace`);
+}
+
 function commandDefinitions() {
   return [
     { id: "search", title: "Tập trung ô tìm kiếm", hint: "Ctrl/⌘ K", run: () => els.searchInput.focus() },
     { id: "add", title: "Lưu nhanh tab hiện tại", hint: "Alt Shift B", run: openQuickAdd },
     { id: "rules", title: "Mở tự động sắp xếp", hint: "Tab", run: () => switchView("automation") },
-    { id: "apply-rules", title: "Áp dụng luật cho toàn bộ thư viện", hint: "Auto", run: () => applyRulesToItems(state.bookmarks) },
+    { id: "apply-rules", title: "Xem trước luật cho toàn bộ thư viện", hint: "Auto", run: () => showRulePreview(state.bookmarks) },
     { id: "cleanup", title: "Mở dọn dẹp", hint: "Tab", run: () => switchView("cleanup") },
     { id: "insights", title: "Mở thống kê", hint: "Tab", run: () => switchView("insights") },
     { id: "export", title: "Xuất JSON đầy đủ", hint: "Backup", run: exportJson },
@@ -846,16 +956,108 @@ async function openSidePanel() {
   await chrome.sidePanel.open({ windowId: tab.windowId });
 }
 
+function renderHiddenVault() {
+  const unlocked = Boolean(state.vaultKey);
+  els.hiddenLocked.classList.toggle("is-hidden", unlocked);
+  els.hiddenUnlocked.classList.toggle("is-hidden", !unlocked);
+  els.hiddenLock.disabled = !unlocked;
+  els.hiddenSummary.textContent = `${state.hiddenItems.length.toLocaleString("vi-VN")} trang`;
+  els.hiddenList.innerHTML = state.hiddenItems.length ? state.hiddenItems.map((item) => `
+    <article class="hidden-row" data-hidden-id="${BL.escapeHtml(item.id)}">
+      <div class="favicon"><span>${BL.escapeHtml((item.domain || "H")[0].toUpperCase())}</span><img loading="lazy" src="${BL.faviconUrl(item.url)}" alt="" /></div>
+      <div><strong title="${BL.escapeHtml(item.url)}">${BL.escapeHtml(item.title)}</strong><span>${BL.escapeHtml(item.domain)} · ${BL.relativeDate(item.createdAt)}</span></div>
+      <div class="hidden-actions"><button data-hidden-action="open" type="button">Mở</button><button data-hidden-action="copy" type="button">Sao chép</button><button data-hidden-action="delete" type="button">Xóa</button></div>
+    </article>`).join("") : `<div class="empty-state"><div class="empty-icon"><svg><use href="#i-lock"></use></svg></div><h2>Kho ẩn đang trống</h2><p>Lưu tab hiện tại vào Kho ẩn để trang không xuất hiện trong Chrome bookmarks.</p></div>`;
+  els.hiddenList.querySelectorAll("img").forEach((image) => image.addEventListener("error", (event) => event.currentTarget.remove()));
+  window.BookmarkLensI18n?.apply(els.hiddenUnlocked);
+}
+
+async function unlockHiddenVault() {
+  const configured = await BL.isVaultConfigured();
+  if (!configured) {
+    const password = prompt("Tạo mật khẩu cho Kho ẩn");
+    if (!password) return;
+    if (password.length < 6) { showToast("Mật khẩu nên có ít nhất 6 ký tự"); return; }
+    const confirmPassword = prompt("Nhập lại mật khẩu Kho ẩn");
+    if (password !== confirmPassword) { showToast("Mật khẩu nhập lại không khớp"); return; }
+    const vault = await BL.createVault(password);
+    state.vaultKey = vault.key;
+    state.hiddenItems = vault.items;
+    renderHiddenVault();
+    showToast("Đã tạo và mở khóa Kho ẩn");
+    return;
+  }
+  const password = prompt("Nhập mật khẩu Kho ẩn");
+  if (!password) return;
+  try {
+    const vault = await BL.unlockVault(password);
+    state.vaultKey = vault.key;
+    state.hiddenItems = vault.items;
+    renderHiddenVault();
+    showToast("Đã mở khóa Kho ẩn");
+  } catch {
+    showToast("Sai mật khẩu Kho ẩn");
+  }
+}
+
+function lockHiddenVault() {
+  state.vaultKey = null;
+  state.hiddenItems = [];
+  renderHiddenVault();
+  showToast("Đã khóa Kho ẩn");
+}
+
+async function saveCurrentTabToHiddenVault() {
+  if (!state.vaultKey) await unlockHiddenVault();
+  if (!state.vaultKey) return;
+  const [tab] = await BL.chromeCall((done) => chrome.tabs.query({ active: true, currentWindow: true }, done));
+  if (!tab?.url || !/^https?:/i.test(tab.url)) { showToast("Tab này không thể lưu ẩn"); return; }
+  if (state.hiddenItems.some((item) => BL.normalizeUrl(item.url) === BL.normalizeUrl(tab.url))) { showToast("Trang này đã có trong Kho ẩn"); return; }
+  const item = BL.createVaultItem({ title: tab.title || tab.url, url: tab.url });
+  state.hiddenItems = [item, ...state.hiddenItems];
+  await BL.saveVaultItems(state.vaultKey, state.hiddenItems);
+  renderHiddenVault();
+  showToast("Đã lưu trang vào Kho ẩn");
+}
+
+async function deleteHiddenItem(item) {
+  if (!state.vaultKey) return;
+  state.hiddenItems = state.hiddenItems.filter((entry) => entry.id !== item.id);
+  await BL.saveVaultItems(state.vaultKey, state.hiddenItems);
+  renderHiddenVault();
+  showToast("Đã xóa khỏi Kho ẩn");
+}
+
+async function loadWebsitePreview(url) {
+  els.previewStatus.textContent = "Đang tải...";
+  els.previewFrame.src = url;
+  els.previewFrame.closest(".preview-panel").classList.add("is-loaded");
+  try {
+    const granted = await BL.chromeCall((done) => chrome.permissions.request({ origins: ["http://*/*", "https://*/*"] }, done));
+    if (!granted) { els.previewStatus.textContent = "Đã tải iframe"; return; }
+    const response = await fetch(url, { method: "GET", cache: "no-store" });
+    const html = await response.text();
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const title = doc.querySelector("meta[property='og:title']")?.content || doc.querySelector("title")?.textContent || "";
+    const description = doc.querySelector("meta[property='og:description']")?.content || doc.querySelector("meta[name='description']")?.content || "";
+    const image = doc.querySelector("meta[property='og:image']")?.content || "";
+    if (title && !els.editorTitle.value.trim()) els.editorTitle.value = title.trim();
+    els.previewStatus.textContent = [title ? "title" : "", description ? "description" : "", image ? "image" : ""].filter(Boolean).join(" · ") || "Đã tải iframe";
+  } catch {
+    els.previewStatus.textContent = "Đã tải iframe";
+  }
+}
+
 function bindEvents() {
   $$(".tab-button").forEach((button) => button.addEventListener("click", () => switchView(button.dataset.view)));
-  els.searchInput.addEventListener("input", () => { state.query = els.searchInput.value; state.visibleLimit = state.settings.pageSize || 120; switchView("library"); renderLibrary(); });
+  els.searchInput.addEventListener("input", () => { state.query = els.searchInput.value; state.visibleLimit = state.settings.pageSize || 120; state.virtualStart = 0; switchView("library"); scheduleIndexedSearch(); });
   els.searchInput.addEventListener("keydown", (event) => { if (event.key === "Enter") saveSearchHistory(); });
   els.searchInput.addEventListener("change", saveSearchHistory);
-  els.clearSearch.addEventListener("click", () => { state.query = ""; els.searchInput.value = ""; renderLibrary(); els.searchInput.focus(); });
-  els.smartFolders.addEventListener("click", (event) => { const button = event.target.closest("[data-smart]"); if (!button) return; state.smart = button.dataset.smart; state.folderId = "all"; state.visibleLimit = state.settings.pageSize || 120; renderSidebar(); renderLibrary(); });
-  els.folderTree.addEventListener("click", (event) => { const button = event.target.closest("[data-folder]"); if (!button) return; state.folderId = button.dataset.folder; state.smart = "all"; state.visibleLimit = state.settings.pageSize || 120; renderSidebar(); renderLibrary(); });
-  els.sortSelect.addEventListener("change", () => { state.sort = els.sortSelect.value; renderLibrary(); });
-  els.domainSelect.addEventListener("change", () => { state.domain = els.domainSelect.value; state.visibleLimit = state.settings.pageSize || 120; renderLibrary(); });
+  els.clearSearch.addEventListener("click", () => { state.query = ""; state.indexedMatchIds = null; state.virtualStart = 0; els.searchInput.value = ""; renderLibrary(); els.searchInput.focus(); });
+  els.smartFolders.addEventListener("click", (event) => { const button = event.target.closest("[data-smart]"); if (!button) return; state.smart = button.dataset.smart; state.folderId = "all"; state.visibleLimit = state.settings.pageSize || 120; state.virtualStart = 0; renderSidebar(); renderLibrary(); });
+  els.folderTree.addEventListener("click", (event) => { const button = event.target.closest("[data-folder]"); if (!button) return; state.folderId = button.dataset.folder; state.smart = "all"; state.visibleLimit = state.settings.pageSize || 120; state.virtualStart = 0; renderSidebar(); renderLibrary(); });
+  els.sortSelect.addEventListener("change", () => { state.sort = els.sortSelect.value; state.virtualStart = 0; renderLibrary(); });
+  els.domainSelect.addEventListener("change", () => { state.domain = els.domainSelect.value; state.visibleLimit = state.settings.pageSize || 120; state.virtualStart = 0; renderLibrary(); });
   els.selectAll.addEventListener("change", () => { filteredBookmarks().forEach((item) => els.selectAll.checked ? state.selected.add(item.id) : state.selected.delete(item.id)); renderLibrary(); });
   els.clearSelection.addEventListener("click", () => { state.selected.clear(); renderLibrary(); });
   els.bulkBar.addEventListener("click", (event) => { const action = event.target.closest("[data-bulk]")?.dataset.bulk; if (action) handleBulk(action); });
@@ -885,14 +1087,43 @@ function bindEvents() {
   els.themeSetting.addEventListener("change", async () => { state.settings.theme = els.themeSetting.value; BL.applyTheme(state.settings.theme); await BL.saveSettings(state.settings); });
   els.themeToggle.addEventListener("click", async () => { state.settings.theme = document.documentElement.dataset.theme === "dark" ? "light" : "dark"; BL.applyTheme(state.settings.theme); await BL.saveSettings(state.settings); renderSettings(); });
   els.syncSettings.addEventListener("change", async () => { state.settings.syncEnabled = els.syncSettings.checked; await BL.saveSettings(state.settings); showToast(state.settings.syncEnabled ? "Đã bật đồng bộ cài đặt" : "Đã tắt đồng bộ cài đặt"); });
+  els.syncMetadata.addEventListener("change", async () => {
+    state.settings.syncMetadata = els.syncMetadata.checked;
+    await BL.saveSettings(state.settings);
+    if (state.settings.syncMetadata) {
+      const result = await BL.saveMetadataToSync?.(state.metadata);
+      showToast(result?.synced === false ? "Metadata vượt giới hạn Chrome Sync, vẫn lưu cục bộ" : "Đã bật đồng bộ metadata");
+    } else {
+      showToast("Đã tắt đồng bộ metadata");
+    }
+  });
   els.autoOrganizeNew.addEventListener("change", async () => { state.settings.autoOrganizeNew = els.autoOrganizeNew.checked; await BL.saveSettings(state.settings); showToast(state.settings.autoOrganizeNew ? "Bookmark mới sẽ tự áp luật" : "Đã tắt tự áp luật khi lưu mới"); });
   els.compactMode.addEventListener("change", async () => { state.settings.compactMode = els.compactMode.checked; await BL.saveSettings(state.settings); renderSettings(); renderLibrary(); });
+  els.virtualList.addEventListener("change", async () => { state.settings.virtualList = els.virtualList.checked; await BL.saveSettings(state.settings); renderSettings(); renderLibrary(); });
   els.pageSize.addEventListener("change", async () => { state.settings.pageSize = Number(els.pageSize.value) || 120; state.visibleLimit = state.settings.pageSize; await BL.saveSettings(state.settings); renderLibrary(); showToast("Đã lưu số dòng mỗi lần tải"); });
   els.addRule.addEventListener("click", saveRuleFromForm);
-  els.applyRulesAll.addEventListener("click", () => applyRulesToItems(state.bookmarks));
+  els.applyRulesAll.addEventListener("click", () => showRulePreview(state.bookmarks));
   els.applyRulesSelected.addEventListener("click", () => {
     const items = state.bookmarks.filter((item) => state.selected.has(item.id));
-    applyRulesToItems(items, "Đã áp dụng luật cho mục đã chọn");
+    showRulePreview(items, "Đã áp dụng luật cho mục đã chọn");
+  });
+  els.rulePreviewForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const preview = state.pendingRulePreview;
+    state.pendingRulePreview = null;
+    els.rulePreviewDialog.close();
+    if (preview) await applyRuleChanges(preview.changes, preview.message);
+  });
+  els.applyRuleTemplate.addEventListener("click", async () => {
+    const before = [...(state.settings.autoRules || [])];
+    const rules = ruleTemplates().map((template) => {
+      const folder = state.folders.find((item) => BL.normalizeText(item.title) === BL.normalizeText(template.folderName) || BL.normalizeText(item.path).includes(BL.normalizeText(template.folderName)));
+      return BL.normalizeRule({ ...template, folderId: folder?.id || "", enabled: true });
+    });
+    state.settings.autoRules = [...rules, ...before];
+    await BL.saveSettings(state.settings);
+    renderAutomation();
+    setUndo("Đã thêm mẫu luật", async () => { state.settings.autoRules = before; await BL.saveSettings(state.settings); renderAutomation(); });
   });
   els.ruleList.addEventListener("click", async (event) => {
     const card = event.target.closest("[data-rule-id]");
@@ -916,7 +1147,7 @@ function bindEvents() {
     if (action === "filter") {
       state.domain = domain; els.domainSelect.value = domain; switchView("library"); renderLibrary(); return;
     }
-    fillRuleForm({ name: `Gom ${domain}`, field: "domain", match: "equals", value: domain, tags: [domain.split(".")[0]].filter(Boolean), enabled: true });
+    fillRuleForm({ name: `Gom ${domain}`, field: card.dataset.field || "domain", match: card.dataset.match || "equals", value: domain, tags: card.dataset.tags ? card.dataset.tags.split(",").filter(Boolean) : [domain.split(".")[0]].filter(Boolean), enabled: true });
   });
   els.saveWorkspace.addEventListener("click", saveWorkspace);
   els.workspaceList.addEventListener("click", async (event) => {
@@ -927,6 +1158,7 @@ function bindEvents() {
     const workspace = before.find((item) => item.id === card.dataset.workspaceId);
     if (!workspace) return;
     if (action === "open") openWorkspace(workspace);
+    if (action === "tabs") await openWorkspaceTabs(workspace);
     if (action === "delete") {
       state.settings.workspaces = before.filter((item) => item.id !== workspace.id);
       await BL.saveSettings(state.settings);
@@ -937,6 +1169,19 @@ function bindEvents() {
   els.commandButton.addEventListener("click", openCommandPalette);
   els.openSidePanel.addEventListener("click", openSidePanel);
   els.helpButton.addEventListener("click", () => els.helpDialog.showModal());
+  els.hiddenUnlock.addEventListener("click", unlockHiddenVault);
+  els.hiddenLock.addEventListener("click", lockHiddenVault);
+  els.hiddenSaveCurrent.addEventListener("click", saveCurrentTabToHiddenVault);
+  els.hiddenList.addEventListener("click", async (event) => {
+    const row = event.target.closest("[data-hidden-id]");
+    const action = event.target.closest("[data-hidden-action]")?.dataset.hiddenAction;
+    if (!row || !action || !state.vaultKey) return;
+    const item = state.hiddenItems.find((entry) => entry.id === row.dataset.hiddenId);
+    if (!item) return;
+    if (action === "open") chrome.tabs.create({ url: item.url });
+    if (action === "copy") { await navigator.clipboard.writeText(item.url); showToast("Đã sao chép địa chỉ"); }
+    if (action === "delete") await deleteHiddenItem(item);
+  });
   els.commandInput.addEventListener("input", () => { state.commandIndex = 0; renderCommandPalette(); });
   els.commandInput.addEventListener("keydown", (event) => {
     const items = $$(".command-item");
@@ -946,13 +1191,13 @@ function bindEvents() {
   });
   els.commandList.addEventListener("click", (event) => { const button = event.target.closest("[data-command]"); if (button) runCommand(button.dataset.command); });
   els.loadPreview.addEventListener("click", () => {
-    els.previewFrame.src = els.editorUrl.value;
-    els.previewStatus.textContent = "Đang tải...";
-    els.previewFrame.closest(".preview-panel").classList.add("is-loaded");
+    loadWebsitePreview(els.editorUrl.value);
   });
   els.previewFrame.addEventListener("load", () => { els.previewStatus.textContent = "Đã tải"; });
   els.confirmForm.addEventListener("submit", (event) => { event.preventDefault(); const resolver = state.confirmResolver; state.confirmResolver = null; els.confirmDialog.close(); resolver?.(true); });
   els.confirmDialog.addEventListener("close", () => { if (state.confirmResolver) { const resolver = state.confirmResolver; state.confirmResolver = null; resolver(false); } });
+  els.onboardingForm.addEventListener("submit", async (event) => { event.preventDefault(); state.settings.onboardingDone = true; await BL.saveSettings(state.settings); els.onboardingDialog.close(); });
+  els.onboardingDialog.addEventListener("close", async () => { if (!state.settings.onboardingDone) { state.settings.onboardingDone = true; await BL.saveSettings(state.settings); } });
   $$(".close-dialog").forEach((button) => button.addEventListener("click", () => button.closest("dialog").close()));
   els.undoButton.addEventListener("click", async () => { const entry = state.undoStack.shift(); els.toast.classList.remove("is-visible"); if (entry) { await entry.callback(); showToast("Đã hoàn tác thay đổi", state.undoStack.length > 0); } });
   els.domainChart.addEventListener("click", (event) => { const button = event.target.closest("[data-domain]"); if (!button) return; state.domain = button.dataset.domain; els.domainSelect.value = state.domain; switchView("library"); renderLibrary(); });
@@ -960,6 +1205,17 @@ function bindEvents() {
     if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === "k") { event.preventDefault(); openCommandPalette(); return; }
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") { event.preventDefault(); els.searchInput.focus(); }
   });
+  addEventListener("scroll", () => {
+    if (state.settings.virtualList === false) return;
+    const filteredLength = filteredBookmarks().length;
+    if (filteredLength <= 600) return;
+    const top = Math.max(0, scrollY - 170);
+    const nextStart = Math.max(0, Math.floor(top / state.virtualRowHeight) - 4);
+    if (Math.abs(nextStart - state.virtualStart) > 3) {
+      state.virtualStart = nextStart;
+      renderLibrary();
+    }
+  }, { passive: true });
 }
 
 async function init() {
@@ -980,7 +1236,11 @@ async function init() {
   state.query = query; els.searchInput.value = query;
   state.duplicateGroups = BL.findDuplicateGroups(state.bookmarks);
   state.duplicateIds = new Set(state.duplicateGroups.flat().map((item) => item.id));
+  scheduleIndexRebuild();
   renderAll();
+  if (!state.settings.onboardingDone) {
+    requestAnimationFrame(() => els.onboardingDialog.showModal());
+  }
 }
 
 init().catch((error) => {

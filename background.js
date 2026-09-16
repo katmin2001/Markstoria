@@ -48,7 +48,7 @@ function getDomain(value = "") {
 }
 
 async function loadSettings() {
-  const defaults = { lastFolderId: null, language: "vi", syncEnabled: false, autoOrganizeNew: false, autoRules: [] };
+  const defaults = { lastFolderId: null, language: "vi", syncEnabled: false, syncMetadata: false, autoOrganizeNew: false, autoRules: [] };
   const local = await callChrome((done) => chrome.storage.local.get([SETTINGS_KEY], done));
   const localSettings = { ...defaults, ...local[SETTINGS_KEY] };
   if (!chrome.storage?.sync) return localSettings;

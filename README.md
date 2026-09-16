@@ -1,4 +1,4 @@
-# Bookmark Lens 3.0.1
+# Bookmark Lens 3.2.0
 
 Developed by **Kenzy**.
 
@@ -24,11 +24,16 @@ Tiện ích Chrome giúp tìm, lọc, tổ chức và bảo trì toàn bộ thư
 - Lưu tab hiện tại hoặc toàn bộ cửa sổ; cảnh báo khi URL đã tồn tại.
 - Side Panel để tìm, lọc domain, mở workspace và lưu tab mà không rời trang hiện tại.
 - Luật tự động sắp xếp theo domain, tiêu đề, URL, thư mục hoặc tag; có thể tự áp khi lưu bookmark mới.
+- Xem trước bookmark sẽ bị di chuyển/gắn tag trước khi áp dụng rule hàng loạt.
+- Mẫu luật sẵn cho GitHub, YouTube, tài liệu và đọc sau.
 - Gợi ý tạo luật từ domain phổ biến và workspace để lưu bộ lọc hay dùng.
-- Command palette `Ctrl/⌘ + Shift + K`, trợ giúp nhanh và preview website trong màn hình chỉnh sửa.
+- Command palette `Ctrl/⌘ + Shift + K`, trợ giúp nhanh, onboarding lần đầu và preview website trong màn hình chỉnh sửa.
 - Chuyển ngôn ngữ giao diện giữa Tiếng Việt và English trong popup, Side Panel và dashboard.
-- Đồng bộ tùy chọn qua `chrome.storage.sync` khi người dùng bật.
-- Chế độ gọn, lazy favicon và tùy chỉnh số dòng tải thêm cho thư viện lớn.
+- Đồng bộ tùy chọn qua `chrome.storage.sync`; metadata tag/màu/note/trạng thái có thể sync nếu còn trong giới hạn Chrome Sync, nếu vượt sẽ giữ cục bộ.
+- Chế độ gọn, lazy favicon, danh sách ảo hóa, IndexedDB search index và tùy chỉnh số dòng tải thêm cho thư viện lớn.
+- Kéo thả bookmark vào thư mục ngay trong Side Panel.
+- Workspace lưu bộ lọc và có thể mở lại toàn bộ tab đã lưu trong workspace.
+- Kho ẩn mã hóa bằng mật khẩu để lưu trang riêng tư không xuất hiện trong Chrome bookmarks.
 - Dashboard thống kê tên miền, thư mục và hoạt động theo tháng.
 - Xuất/nhập JSON đầy đủ hoặc HTML tương thích trình duyệt.
 - Menu chuột phải và phím tắt `Ctrl+Shift+Y`, `Alt+Shift+B`; khi lưu bằng phím tắt sẽ có badge/notification báo kết quả.

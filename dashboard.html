@@ -34,6 +34,7 @@
       <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"></path><path d="M4 9h10a6 6 0 0 1 6 6v1"></path></symbol>
       <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></symbol>
       <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></symbol>
     </svg>
 
     <header class="app-header">
@@ -61,6 +62,7 @@
       <button class="tab-button" data-view="cleanup" type="button"><svg><use href="#i-copy"></use></svg>Dọn dẹp</button>
       <button class="tab-button" data-view="insights" type="button"><svg><use href="#i-chart"></use></svg>Thống kê</button>
       <button class="tab-button" data-view="automation" type="button"><svg><use href="#i-move"></use></svg>Tự động</button>
+      <button class="tab-button" data-view="hidden" type="button"><svg><use href="#i-lock"></use></svg>Kho ẩn</button>
       <button class="tab-button" data-view="backup" type="button"><svg><use href="#i-database"></use></svg>Sao lưu</button>
     </nav>
 
@@ -167,6 +169,7 @@
           <section class="settings-section">
             <h2>Gợi ý thư mục</h2>
             <p>Dựa trên các domain xuất hiện nhiều lần trong thư viện.</p>
+            <div class="button-row"><button id="applyRuleTemplate" class="button-secondary" type="button"><svg><use href="#i-plus"></use></svg>Thêm mẫu luật</button></div>
             <div id="ruleSuggestionList" class="suggestion-list"></div>
           </section>
           <section class="settings-section">
@@ -176,6 +179,19 @@
             <div id="workspaceList" class="workspace-list"></div>
           </section>
         </div>
+      </section>
+
+      <section id="hiddenView" class="view page-view">
+        <div class="page-heading"><div><h1>Kho ẩn</h1><p>Lưu trang riêng tư trong vault mã hóa. Link ẩn không xuất hiện trong Chrome bookmarks.</p></div><div class="button-row"><button id="hiddenSaveCurrent" class="button-primary" type="button"><svg><use href="#i-plus"></use></svg>Lưu tab hiện tại</button><button id="hiddenLock" class="button-secondary" type="button"><svg><use href="#i-lock"></use></svg>Khóa</button></div></div>
+        <section id="hiddenLocked" class="settings-section hidden-lock-panel">
+          <h2>Mở khóa Kho ẩn</h2>
+          <p>Nếu đây là lần đầu dùng, hãy tạo mật khẩu. Bookmark Lens không thể khôi phục mật khẩu nếu bạn quên.</p>
+          <div class="button-row"><button id="hiddenUnlock" class="button-primary" type="button">Mở khóa / Tạo mật khẩu</button></div>
+        </section>
+        <section id="hiddenUnlocked" class="settings-section hidden-vault-panel is-hidden">
+          <div class="tool-heading"><div class="tool-icon blue"><svg><use href="#i-lock"></use></svg></div><div><h2>Trang đã lưu ẩn</h2><p id="hiddenSummary">0 trang</p></div></div>
+          <div id="hiddenList" class="hidden-list"></div>
+        </section>
       </section>
 
       <section id="backupView" class="view page-view">
@@ -199,8 +215,10 @@
             <label class="setting-row"><span><strong>Ngôn ngữ</strong><small>Chọn tiếng Việt hoặc tiếng Anh cho giao diện</small></span><select id="languageSelect" class="language-select"><option value="vi">Tiếng Việt</option><option value="en">English</option></select></label>
             <label class="setting-row"><span><strong>Giao diện</strong><small>Theo hệ thống, sáng hoặc tối</small></span><select id="themeSetting"><option value="system">Theo hệ thống</option><option value="light">Sáng</option><option value="dark">Tối</option></select></label>
             <label class="setting-row"><span><strong>Đồng bộ cài đặt</strong><small>Lưu theme, rule, workspace và tùy chọn bằng chrome.storage.sync</small></span><input id="syncSettings" type="checkbox" /></label>
+            <label class="setting-row"><span><strong>Đồng bộ metadata</strong><small>Đồng bộ tag, màu, ghi chú, trạng thái đọc nếu còn trong giới hạn Chrome Sync</small></span><input id="syncMetadata" type="checkbox" /></label>
             <label class="setting-row"><span><strong>Tự áp luật khi lưu mới</strong><small>Bookmark mới sẽ được di chuyển/gắn tag theo luật phù hợp</small></span><input id="autoOrganizeNew" type="checkbox" /></label>
             <label class="setting-row"><span><strong>Chế độ gọn</strong><small>Hiển thị danh sách dày hơn cho thư viện lớn</small></span><input id="compactMode" type="checkbox" /></label>
+            <label class="setting-row"><span><strong>Danh sách ảo hóa</strong><small>Chỉ render vùng đang nhìn để cuộn mượt với thư viện lớn</small></span><input id="virtualList" type="checkbox" /></label>
             <label class="setting-row"><span><strong>Số dòng mỗi lần tải</strong><small>Giảm nếu thư viện rất lớn, tăng nếu máy khỏe</small></span><select id="pageSize"><option value="80">80</option><option value="120">120</option><option value="200">200</option><option value="320">320</option></select></label>
           </section>
         </div>
@@ -245,6 +263,14 @@
       <form id="confirmForm" method="dialog"><h2 id="confirmTitle">Xác nhận</h2><p id="confirmMessage"></p><div class="dialog-actions"><button class="button-secondary close-dialog" type="button">Hủy</button><button id="confirmAction" class="button-danger" type="submit">Tiếp tục</button></div></form>
     </dialog>
 
+    <dialog id="rulePreviewDialog" class="dialog preview-dialog">
+      <form id="rulePreviewForm" method="dialog">
+        <div class="dialog-head"><div><h2>Xem trước áp dụng luật</h2><p id="rulePreviewSummary">Kiểm tra thay đổi trước khi áp dụng.</p></div><button class="icon-button close-dialog" type="button" aria-label="Đóng"><svg><use href="#i-x"></use></svg></button></div>
+        <div id="rulePreviewList" class="preview-list"></div>
+        <div class="dialog-actions"><button class="button-secondary close-dialog" type="button">Hủy</button><button id="confirmRulePreview" class="button-primary" type="submit">Áp dụng thay đổi</button></div>
+      </form>
+    </dialog>
+
     <dialog id="commandDialog" class="dialog command-dialog">
       <form method="dialog">
         <div class="global-search command-search"><svg><use href="#i-search"></use></svg><input id="commandInput" type="search" placeholder="Gõ để chạy lệnh..." autocomplete="off" /><button class="icon-button close-dialog" type="button" aria-label="Đóng"><svg><use href="#i-x"></use></svg></button></div>
@@ -263,6 +289,19 @@
           <div><strong>Tìm nhanh</strong><span><code>Ctrl/⌘ + K</code></span></div>
           <div><strong>Lưu tab</strong><span><code>Alt + Shift + B</code></span></div>
         </div>
+      </form>
+    </dialog>
+
+    <dialog id="onboardingDialog" class="dialog onboarding-dialog">
+      <form id="onboardingForm" method="dialog">
+        <div class="dialog-head"><div><h2>Chào mừng đến Bookmark Lens</h2><p>Bắt đầu nhanh với 4 thao tác hữu ích nhất.</p></div><button class="icon-button close-dialog" type="button" aria-label="Đóng"><svg><use href="#i-x"></use></svg></button></div>
+        <div class="help-grid">
+          <div><strong>Tìm và lọc</strong><span>Dùng ô tìm kiếm, domain chip hoặc cú pháp <code>site:</code>, <code>tag:</code>.</span></div>
+          <div><strong>Rule tự động</strong><span>Tạo luật để tự di chuyển/gắn tag bookmark theo domain hoặc keyword.</span></div>
+          <div><strong>Backup và undo</strong><span>Trước khi xóa hàng loạt, Bookmark Lens tạo điểm phục hồi và hỗ trợ undo nhiều bước.</span></div>
+          <div><strong>Side Panel</strong><span>Mở panel cạnh để lưu, tìm và kéo thả bookmark mà không rời tab hiện tại.</span></div>
+        </div>
+        <div class="dialog-actions"><button id="finishOnboarding" class="button-primary" type="submit">Bắt đầu dùng</button></div>
       </form>
     </dialog>
 

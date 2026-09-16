@@ -36,6 +36,7 @@ const els = {
   openManager: document.querySelector("#openManager"),
   themeToggle: document.querySelector("#themeToggle"),
   saveCurrent: document.querySelector("#saveCurrent"),
+  saveHidden: document.querySelector("#saveHidden"),
   saveAllTabs: document.querySelector("#saveAllTabs"),
   openSidePanel: document.querySelector("#openSidePanel"),
   openDashboard: document.querySelector("#openDashboard"),
@@ -459,6 +460,41 @@ async function rememberSearch() {
   els.searchSuggestions.innerHTML = state.settings.searchHistory.map((term) => `<option value="${escapeHtml(term)}"></option>`).join("");
 }
 
+async function requestVaultPassword(createIfMissing = true) {
+  const configured = await BookmarkLens.isVaultConfigured();
+  if (!configured && !createIfMissing) return null;
+  if (!configured) {
+    const password = prompt("Tạo mật khẩu cho Kho ẩn");
+    if (!password) return null;
+    if (password.length < 6) { showToast("Mật khẩu nên có ít nhất 6 ký tự"); return null; }
+    const confirmPassword = prompt("Nhập lại mật khẩu Kho ẩn");
+    if (password !== confirmPassword) { showToast("Mật khẩu nhập lại không khớp"); return null; }
+    return { ...(await BookmarkLens.createVault(password)), created: true };
+  }
+  const password = prompt("Nhập mật khẩu Kho ẩn");
+  if (!password) return null;
+  try {
+    return await BookmarkLens.unlockVault(password);
+  } catch {
+    showToast("Sai mật khẩu Kho ẩn");
+    return null;
+  }
+}
+
+async function saveHiddenTab() {
+  const [tab] = await chromeCall((done) => chrome.tabs.query({ active: true, currentWindow: true }, done));
+  if (!tab?.url || !/^https?:/i.test(tab.url)) { showToast("Tab này không thể lưu ẩn"); return; }
+  const vault = await requestVaultPassword(true);
+  if (!vault) return;
+  if (vault.items.some((item) => normalizeUrl(item.url) === normalizeUrl(tab.url))) {
+    showToast("Trang này đã có trong Kho ẩn");
+    return;
+  }
+  const item = BookmarkLens.createVaultItem({ title: tab.title || tab.url, url: tab.url });
+  await BookmarkLens.saveVaultItems(vault.key, [item, ...vault.items]);
+  showToast("Đã lưu trang vào Kho ẩn");
+}
+
 function bindEvents() {
   els.searchInput.addEventListener("input", () => {
     state.query = els.searchInput.value;
@@ -518,6 +554,7 @@ function bindEvents() {
     await chrome.sidePanel.open({ windowId: tab.windowId });
   });
   els.saveCurrent.addEventListener("click", () => openAddDialog("tab"));
+  els.saveHidden.addEventListener("click", saveHiddenTab);
   els.saveAllTabs.addEventListener("click", () => openAddDialog("window"));
   els.addForm.addEventListener("submit", saveQuickAdd);
   els.closeAdd.addEventListener("click", () => els.addDialog.close());

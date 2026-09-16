@@ -21,6 +21,7 @@ const els = {
   clearSearch: document.querySelector("#clearSearch"),
   domainChips: document.querySelector("#domainChips"),
   workspaceChips: document.querySelector("#workspaceChips"),
+  folderTargets: document.querySelector("#folderTargets"),
   results: document.querySelector("#results"),
   loadMore: document.querySelector("#loadMore"),
   toast: document.querySelector("#toast"),
@@ -70,11 +71,17 @@ function renderChips() {
 
   const workspaces = state.settings.workspaces || [];
   els.workspaceChips.innerHTML = workspaces.slice(0, 8).map((workspace) => `<button class="chip" data-workspace="${BL.escapeHtml(workspace.id)}" type="button">${BL.escapeHtml(workspace.name)}</button>`).join("");
+
+  els.folderTargets.innerHTML = [...state.folders]
+    .sort((a, b) => a.path.localeCompare(b.path, "vi"))
+    .slice(0, 30)
+    .map((folder) => `<div class="folder-target" data-folder="${folder.id}" title="${BL.escapeHtml(folder.path)}"><span>${BL.escapeHtml(folder.path)}</span><b>${state.bookmarks.filter((item) => item.parentId === folder.id).length}</b></div>`)
+    .join("");
 }
 
 function resultItem(bookmark) {
   const unread = bookmark.meta.readStatus === "unread" ? '<span class="badge">CHƯA ĐỌC</span>' : "";
-  return `<article class="result" data-id="${bookmark.id}">
+  return `<article class="result" data-id="${bookmark.id}" draggable="true">
     <div class="favicon"><span>${BL.escapeHtml((bookmark.domain || "B")[0].toUpperCase())}</span><img loading="lazy" src="${BL.faviconUrl(bookmark.url)}" alt="" /></div>
     <div>
       <a class="result-title" href="${BL.escapeHtml(bookmark.url)}" target="_blank" rel="noreferrer">${BL.escapeHtml(bookmark.title)}${unread}</a>
@@ -94,7 +101,31 @@ function render() {
   els.clearSearch.classList.toggle("is-hidden", !state.query);
   renderChips();
   els.results.querySelectorAll("img").forEach((image) => image.addEventListener("error", (event) => event.currentTarget.remove()));
+  bindDragDrop();
   window.BookmarkLensI18n?.apply(document.body);
+}
+
+function bindDragDrop() {
+  els.results.querySelectorAll(".result").forEach((row) => {
+    row.addEventListener("dragstart", (event) => {
+      event.dataTransfer.setData("text/plain", row.dataset.id);
+      event.dataTransfer.effectAllowed = "move";
+    });
+  });
+  els.folderTargets.querySelectorAll(".folder-target").forEach((target) => {
+    target.addEventListener("dragover", (event) => { event.preventDefault(); target.classList.add("is-drop-target"); });
+    target.addEventListener("dragleave", () => target.classList.remove("is-drop-target"));
+    target.addEventListener("drop", async (event) => {
+      event.preventDefault();
+      target.classList.remove("is-drop-target");
+      const id = event.dataTransfer.getData("text/plain");
+      const bookmark = state.bookmarks.find((item) => item.id === id);
+      if (!bookmark || bookmark.parentId === target.dataset.folder) return;
+      await BL.chromeCall((done) => chrome.bookmarks.move(id, { parentId: target.dataset.folder }, done));
+      await refresh();
+      showToast("Đã di chuyển bookmark");
+    });
+  });
 }
 
 async function saveCurrentTab() {
