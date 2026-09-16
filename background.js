@@ -1,6 +1,23 @@
 const SETTINGS_KEY = "bookmarkLensSettings";
 const META_KEY = "bookmarkLensMeta";
 
+const MESSAGES = {
+  vi: {
+    saved: "Đã lưu bookmark",
+    duplicate: "Bookmark này đã tồn tại",
+    unsupported: "Tab này không thể lưu",
+    error: "Không thể lưu bookmark",
+    shortcutHint: "Nếu không thấy phím tắt chạy, kiểm tra chrome://extensions/shortcuts.",
+  },
+  en: {
+    saved: "Bookmark saved",
+    duplicate: "This bookmark already exists",
+    unsupported: "This tab cannot be saved",
+    error: "Could not save bookmark",
+    shortcutHint: "If the shortcut does not run, check chrome://extensions/shortcuts.",
+  },
+};
+
 function callChrome(apiCall) {
   return new Promise((resolve, reject) => {
     apiCall((result) => {
@@ -92,13 +109,46 @@ async function openSidePanel() {
   if (windowId && chrome.sidePanel?.open) await chrome.sidePanel.open({ windowId });
 }
 
+function message(settings, key) {
+  return (MESSAGES[settings?.language || "vi"] || MESSAGES.vi)[key] || MESSAGES.vi[key] || key;
+}
+
+async function flashBadge(text, color = "#087f5b") {
+  if (!chrome.action?.setBadgeText) return;
+  await callChrome((done) => chrome.action.setBadgeBackgroundColor({ color }, done)).catch(() => {});
+  await callChrome((done) => chrome.action.setBadgeText({ text }, done)).catch(() => {});
+  setTimeout(() => {
+    chrome.action.setBadgeText({ text: "" }, () => void chrome.runtime.lastError);
+  }, 1800);
+}
+
+async function notifySaveResult(result) {
+  const settings = await loadSettings();
+  const status = result?.status || "error";
+  const badgeText = status === "saved" ? "OK" : status === "duplicate" ? "DUP" : "!";
+  const badgeColor = status === "saved" ? "#087f5b" : status === "duplicate" ? "#9a6a00" : "#c83e4d";
+  await flashBadge(badgeText, badgeColor);
+  if (!chrome.notifications?.create) return;
+  const title = message(settings, status);
+  const detail = result?.title || result?.url || message(settings, "shortcutHint");
+  chrome.notifications.create(`bookmark-lens-${Date.now()}`, {
+    type: "basic",
+    iconUrl: "icons/icon-128.png",
+    title,
+    message: detail,
+  }, () => void chrome.runtime.lastError);
+}
+
 async function saveTab(tab) {
-  if (!tab?.url || /^(chrome|edge|about):/i.test(tab.url)) return;
+  if (!tab?.url || /^(chrome|edge|about|chrome-extension):/i.test(tab.url)) {
+    return { status: "unsupported", title: tab?.title || "", url: tab?.url || "" };
+  }
   const existing = await callChrome((done) => chrome.bookmarks.search({ url: tab.url }, done));
-  if (existing.length) return;
+  if (existing.length) return { status: "duplicate", title: existing[0].title || tab.title || tab.url, url: tab.url };
   const parentId = await getDefaultFolderId();
   const created = await callChrome((done) => chrome.bookmarks.create({ parentId, title: tab.title || tab.url, url: tab.url }, done));
   await applyRulesToBookmark(created);
+  return { status: "saved", title: created.title || tab.title || tab.url, url: created.url };
 }
 
 function createMenus() {
@@ -120,7 +170,8 @@ chrome.runtime.onStartup.addListener(createMenus);
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   const url = info.linkUrl || info.pageUrl || tab?.url;
   if (info.menuItemId === "bookmark-lens-save") {
-    await saveTab({ url, title: info.linkUrl ? info.selectionText || url : tab?.title });
+    const result = await saveTab({ url, title: info.linkUrl ? info.selectionText || url : tab?.title });
+    await notifySaveResult(result);
   }
   if (info.menuItemId === "bookmark-lens-related" && url) {
     let domain = "";
@@ -132,8 +183,13 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
 chrome.commands.onCommand.addListener(async (command) => {
   if (command === "save-current-page") {
-    const [tab] = await callChrome((done) => chrome.tabs.query({ active: true, currentWindow: true }, done));
-    await saveTab(tab);
+    try {
+      const [tab] = await callChrome((done) => chrome.tabs.query({ active: true, currentWindow: true }, done));
+      const result = await saveTab(tab);
+      await notifySaveResult(result);
+    } catch (error) {
+      await notifySaveResult({ status: "error", title: error.message });
+    }
   }
   if (command === "open-dashboard") {
     chrome.tabs.create({ url: chrome.runtime.getURL("dashboard.html") });

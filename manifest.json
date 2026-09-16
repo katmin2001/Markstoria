@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Bookmark Lens",
   "description": "Tìm, lọc, sắp xếp và quản lý bookmark trong Chrome nhanh hơn.",
-  "version": "3.0.0",
-  "permissions": ["bookmarks", "storage", "favicon", "tabs", "history", "contextMenus", "sidePanel"],
+  "version": "3.0.1",
+  "permissions": ["bookmarks", "storage", "favicon", "tabs", "history", "contextMenus", "sidePanel", "notifications"],
   "optional_host_permissions": ["http://*/*", "https://*/*"],
   "background": {
     "service_worker": "background.js"

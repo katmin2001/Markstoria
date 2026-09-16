@@ -1,4 +1,4 @@
-# Bookmark Lens 3.0
+# Bookmark Lens 3.0.1
 
 Developed by **Kenzy**.
 
@@ -31,7 +31,7 @@ Tiện ích Chrome giúp tìm, lọc, tổ chức và bảo trì toàn bộ thư
 - Chế độ gọn, lazy favicon và tùy chỉnh số dòng tải thêm cho thư viện lớn.
 - Dashboard thống kê tên miền, thư mục và hoạt động theo tháng.
 - Xuất/nhập JSON đầy đủ hoặc HTML tương thích trình duyệt.
-- Menu chuột phải và phím tắt `Ctrl+Shift+Y`, `Alt+Shift+B`.
+- Menu chuột phải và phím tắt `Ctrl+Shift+Y`, `Alt+Shift+B`; khi lưu bằng phím tắt sẽ có badge/notification báo kết quả.
 - Giao diện sáng/tối; dữ liệu xử lý cục bộ, không có máy chủ bên ngoài.
 
 ## Cú pháp tìm kiếm
@@ -60,4 +60,7 @@ Tiện ích Chrome giúp tìm, lọc, tổ chức và bảo trì toàn bộ thư
 - `tabs`: lưu tab hiện tại hoặc toàn bộ cửa sổ.
 - `contextMenus`: cung cấp menu chuột phải.
 - `sidePanel`: mở Bookmark Lens trong panel cạnh của Chrome.
+- `notifications`: báo kết quả khi lưu bookmark bằng phím tắt hoặc menu chuột phải.
 - Quyền truy cập `http://*/*` và `https://*/*` là **tùy chọn**, chỉ được hỏi khi bắt đầu kiểm tra liên kết.
+
+Nếu `Alt+Shift+B` không chạy sau khi cài lại, mở `chrome://extensions/shortcuts` và kiểm tra shortcut **Lưu trang hiện tại vào Bookmark Lens** đã được gán đúng chưa.
