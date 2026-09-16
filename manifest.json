@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "Bookmark Lens",
+  "description": "Tìm, lọc, sắp xếp và quản lý bookmark trong Chrome nhanh hơn.",
+  "version": "3.0.0",
+  "permissions": ["bookmarks", "storage", "favicon", "tabs", "history", "contextMenus", "sidePanel"],
+  "optional_host_permissions": ["http://*/*", "https://*/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Bookmark Lens",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": { "default": "Ctrl+Shift+Y" }
+    },
+    "save-current-page": {
+      "suggested_key": { "default": "Alt+Shift+B" },
+      "description": "Lưu trang hiện tại vào Bookmark Lens"
+    },
+    "open-dashboard": {
+      "suggested_key": { "default": "Alt+Shift+L" },
+      "description": "Mở trang quản lý Bookmark Lens"
+    }
+  }
+}

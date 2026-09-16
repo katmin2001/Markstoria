@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bookmark Lens</title>
+    <script src="theme-init.js"></script>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <svg class="icon-sprite" aria-hidden="true">
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="m18 6-12 12M6 6l12 12"></path></symbol>
+      <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7m0-4V3m8 18v-9m0-4V3m8 18v-5m0-4V3M1 14h6m2-6h6m2 8h6"></path></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path></symbol>
+      <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 5h6l2 2h10v12H3z"></path></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></symbol>
+      <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"></path></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2m-9 0 1 15h8l1-15M10 11v5m4-5v5"></path></symbol>
+      <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 3h7v7m0-7L10 14"></path><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"></path></symbol>
+      <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"></path></symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21h-4v-.08A1.7 1.7 0 0 0 9 19.37a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.63 15 1.7 1.7 0 0 0 3.08 14H3v-4h.08A1.7 1.7 0 0 0 4.63 9a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.63h.01A1.7 1.7 0 0 0 10 3.08V3h4v.08A1.7 1.7 0 0 0 15 4.63a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.37 9v.01A1.7 1.7 0 0 0 20.92 10H21v4h-.08A1.7 1.7 0 0 0 19.4 15Z"></path></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></symbol>
+      <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 2 9 5-9 5-9-5z"></path><path d="m3 12 9 5 9-5M3 17l9 5 9-5"></path></symbol>
+    </svg>
+
+    <main class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark"><svg><use href="#i-bookmark"></use></svg></div>
+          <div>
+            <h1>Bookmark Lens</h1>
+            <p id="libraryCount">Đang tải thư viện...</p>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <select id="languageSelect" class="language-select" aria-label="Ngôn ngữ" title="Ngôn ngữ">
+            <option value="vi">VI</option>
+            <option value="en">EN</option>
+          </select>
+          <button class="icon-button" id="themeToggle" type="button" aria-label="Đổi giao diện" title="Đổi giao diện">
+            <svg class="theme-icon theme-icon-light"><use href="#i-sun"></use></svg>
+            <svg class="theme-icon theme-icon-dark"><use href="#i-moon"></use></svg>
+          </button>
+        </div>
+      </header>
+
+      <section class="quick-actions" aria-label="Thao tác nhanh">
+        <button id="saveCurrent" type="button"><svg><use href="#i-plus"></use></svg>Lưu tab</button>
+        <button id="saveAllTabs" type="button"><svg><use href="#i-layers"></use></svg>Lưu cửa sổ</button>
+        <button id="openSidePanel" type="button"><svg><use href="#i-sliders"></use></svg>Side panel</button>
+        <button id="openDashboard" type="button"><svg><use href="#i-settings"></use></svg>Quản lý</button>
+      </section>
+
+      <section class="search-section" aria-label="Tìm kiếm bookmark">
+        <div class="search-box">
+          <svg><use href="#i-search"></use></svg>
+          <input id="searchInput" type="search" placeholder="Tìm hoặc dùng tag:, site:..." autocomplete="off" list="searchSuggestions" autofocus />
+          <datalist id="searchSuggestions"></datalist>
+          <button id="clearSearch" class="clear-button is-hidden" type="button" aria-label="Xóa tìm kiếm" title="Xóa tìm kiếm">
+            <svg><use href="#i-x"></use></svg>
+          </button>
+        </div>
+        <button id="filterToggle" class="filter-button" type="button" aria-expanded="true" title="Bộ lọc">
+          <svg><use href="#i-sliders"></use></svg>
+          <span>Lọc</span>
+          <span id="activeFilterCount" class="filter-count is-hidden">0</span>
+        </button>
+      </section>
+
+      <section id="filterPanel" class="filter-panel" aria-label="Bộ lọc">
+        <label>
+          <span>Thư mục</span>
+          <select id="folderFilter"><option value="all">Tất cả thư mục</option></select>
+        </label>
+        <label>
+          <span>Website / domain</span>
+          <select id="domainFilter"><option value="all">Tất cả website</option></select>
+        </label>
+        <label>
+          <span>Thời gian</span>
+          <select id="timeFilter">
+            <option value="all">Mọi thời điểm</option>
+            <option value="today">Hôm nay</option>
+            <option value="7">7 ngày qua</option>
+            <option value="30">30 ngày qua</option>
+            <option value="365">Năm vừa qua</option>
+          </select>
+        </label>
+        <label>
+          <span>Sắp xếp</span>
+          <select id="sortFilter">
+            <option value="relevance">Phù hợp nhất</option>
+            <option value="newest">Mới thêm gần đây</option>
+            <option value="oldest">Cũ nhất</option>
+            <option value="az">Tên A - Z</option>
+            <option value="za">Tên Z - A</option>
+            <option value="domain">Theo tên miền</option>
+            <option value="folder">Theo thư mục</option>
+            <option value="mostVisited">Truy cập nhiều nhất</option>
+            <option value="recentVisited">Truy cập gần nhất</option>
+            <option value="manual">Thứ tự thủ công</option>
+          </select>
+        </label>
+      </section>
+
+      <section class="quick-filters" aria-label="Lọc nhanh">
+        <button class="chip" id="recentChip" type="button" aria-pressed="false">
+          <svg><use href="#i-clock"></use></svg> Gần đây
+        </button>
+        <button class="chip" id="duplicateChip" type="button" aria-pressed="false">
+          <svg><use href="#i-copy"></use></svg> Trùng lặp
+        </button>
+        <button class="reset-link is-hidden" id="resetFilters" type="button">Đặt lại</button>
+      </section>
+
+      <section class="result-heading">
+        <p id="resultSummary">0 kết quả</p>
+        <span id="searchHint"></span>
+      </section>
+
+      <section id="results" class="results" aria-live="polite"></section>
+      <button id="loadMore" class="load-more is-hidden" type="button">Xem thêm</button>
+
+      <footer>
+        <button id="openManager" class="manager-button" type="button">
+          <svg><use href="#i-settings"></use></svg>
+          Mở trình quản lý bookmark
+        </button>
+        <p class="developer-credit">Developed by <strong>Kenzy</strong></p>
+      </footer>
+    </main>
+
+    <dialog id="editDialog" class="dialog">
+      <form id="editForm" method="dialog">
+        <div class="dialog-head">
+          <h2>Chỉnh sửa bookmark</h2>
+          <button class="icon-button" id="closeEdit" type="button" aria-label="Đóng" title="Đóng"><svg><use href="#i-x"></use></svg></button>
+        </div>
+        <input id="editId" type="hidden" />
+        <label><span>Tiêu đề</span><input id="editTitle" type="text" required /></label>
+        <label><span>Địa chỉ</span><input id="editUrl" type="text" inputmode="url" required /></label>
+        <div class="dialog-actions">
+          <button class="button-secondary" id="cancelEdit" type="button">Hủy</button>
+          <button class="button-primary" type="submit">Lưu thay đổi</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="addDialog" class="dialog">
+      <form id="addForm" method="dialog">
+        <div class="dialog-head"><div><h2>Lưu bookmark</h2><p id="addHint">Chọn thư mục và tag trước khi lưu.</p></div><button class="icon-button" id="closeAdd" type="button" aria-label="Đóng"><svg><use href="#i-x"></use></svg></button></div>
+        <label><span>Tiêu đề</span><input id="addTitle" type="text" required /></label>
+        <label><span>Địa chỉ</span><input id="addUrl" type="text" required /></label>
+        <label><span>Thư mục</span><select id="addFolder"></select></label>
+        <label><span>Tag</span><input id="addTags" type="text" placeholder="công việc, đọc sau" /></label>
+        <label><span>Màu tag</span><select id="addTagColor"><option value="green">Xanh lá</option><option value="blue">Xanh dương</option><option value="coral">San hô</option><option value="gold">Vàng</option><option value="gray">Xám</option></select></label>
+        <label class="inline-check"><input id="addUnread" type="checkbox" /> Đánh dấu chưa đọc</label>
+        <div class="dialog-actions"><button class="button-secondary" id="cancelAdd" type="button">Hủy</button><button class="button-primary" type="submit">Lưu bookmark</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="deleteDialog" class="dialog dialog-small">
+      <form id="deleteForm" method="dialog">
+        <h2>Xóa bookmark?</h2>
+        <p id="deleteName">Bookmark này sẽ bị xóa khỏi Chrome.</p>
+        <input id="deleteId" type="hidden" />
+        <div class="dialog-actions">
+          <button class="button-secondary" id="cancelDelete" type="button">Giữ lại</button>
+          <button class="button-danger" type="submit">Xóa bookmark</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="core.js"></script>
+    <script src="i18n.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

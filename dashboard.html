@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bookmark Lens - Quản lý thư viện</title>
+    <script src="theme-init.js"></script>
+    <link rel="stylesheet" href="dashboard.css" />
+  </head>
+  <body>
+    <svg class="icon-sprite" aria-hidden="true">
+      <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"></path></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></symbol>
+      <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 5h6l2 2h10v12H3z"></path></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></symbol>
+      <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l2-2a5 5 0 0 0-7-7l-1.1 1.1"></path><path d="M14 11a5 5 0 0 0-7.5-.5l-2 2a5 5 0 0 0 7 7l1.1-1.1"></path></symbol>
+      <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 19V9m6 10V5m6 14v-7m4 7H2"></path></symbol>
+      <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5v6c0 1.7 4 3 9 3s9-1.3 9-3V5M3 11v6c0 1.7 4 3 9 3s9-1.3 9-3v-6"></path></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"></path></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="m18 6-12 12M6 6l12 12"></path></symbol>
+      <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 3h7v7m0-7L10 14"></path><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"></path></symbol>
+      <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"></path></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2m-9 0 1 15h8l1-15M10 11v5m4-5v5"></path></symbol>
+      <symbol id="i-move" viewBox="0 0 24 24"><path d="m5 9-3 3 3 3m14-6 3 3-3 3M9 5l3-3 3 3m-6 14 3 3 3-3M2 12h20M12 2v20"></path></symbol>
+      <symbol id="i-tag" viewBox="0 0 24 24"><path d="M20 12 12 20 4 12V4h8z"></path><circle cx="9" cy="9" r="1"></circle></symbol>
+      <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19a2 2 0 0 1 2-2h14V3H6a2 2 0 0 0-2 2z"></path><path d="M4 19a2 2 0 0 0 2 2h14v-4"></path></symbol>
+      <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 17v5m-5-9 3-3V4l-2-2h8l-2 2v6l3 3z"></path></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"></path></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 21h16"></path></symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V3m-5 5 5-5 5 5M4 21h16"></path></symbol>
+      <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"></path><path d="M4 9h10a6 6 0 0 1 6 6v1"></path></symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></symbol>
+      <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle></symbol>
+    </svg>
+
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-mark"><svg><use href="#i-bookmark"></use></svg></div>
+        <div><strong>Bookmark Lens</strong><span>Thư viện của bạn</span></div>
+      </div>
+      <div class="global-search">
+        <svg><use href="#i-search"></use></svg>
+        <input id="searchInput" type="search" autocomplete="off" list="searchSuggestions" placeholder="Tìm kiếm hoặc dùng site:, folder:, tag:, status:, is:..." />
+        <datalist id="searchSuggestions"></datalist>
+        <button id="clearSearch" class="icon-button is-hidden" type="button" title="Xóa tìm kiếm" aria-label="Xóa tìm kiếm"><svg><use href="#i-x"></use></svg></button>
+      </div>
+      <div class="header-actions">
+        <button id="quickAdd" class="button-primary" type="button"><svg><use href="#i-plus"></use></svg>Lưu nhanh</button>
+        <button id="commandButton" class="icon-button" type="button" title="Command palette" aria-label="Command palette"><svg><use href="#i-search"></use></svg></button>
+        <button id="openSidePanel" class="icon-button" type="button" title="Mở side panel" aria-label="Mở side panel"><svg><use href="#i-more"></use></svg></button>
+        <button id="helpButton" class="icon-button" type="button" title="Trợ giúp nhanh" aria-label="Trợ giúp nhanh"><svg><use href="#i-eye"></use></svg></button>
+        <button id="themeToggle" class="icon-button" type="button" title="Đổi giao diện" aria-label="Đổi giao diện"><svg><use href="#i-sun"></use></svg></button>
+      </div>
+    </header>
+
+    <nav class="main-tabs" aria-label="Khu vực quản lý">
+      <button class="tab-button is-active" data-view="library" type="button"><svg><use href="#i-bookmark"></use></svg>Thư viện</button>
+      <button class="tab-button" data-view="cleanup" type="button"><svg><use href="#i-copy"></use></svg>Dọn dẹp</button>
+      <button class="tab-button" data-view="insights" type="button"><svg><use href="#i-chart"></use></svg>Thống kê</button>
+      <button class="tab-button" data-view="automation" type="button"><svg><use href="#i-move"></use></svg>Tự động</button>
+      <button class="tab-button" data-view="backup" type="button"><svg><use href="#i-database"></use></svg>Sao lưu</button>
+    </nav>
+
+    <main>
+      <section id="libraryView" class="view is-active">
+        <aside class="sidebar">
+          <div class="sidebar-section">
+            <p class="section-label">THƯ MỤC THÔNG MINH</p>
+            <div id="smartFolders" class="nav-list"></div>
+          </div>
+          <div class="sidebar-section folders-section">
+            <div class="section-title"><p class="section-label">THƯ MỤC</p><button id="newFolderButton" class="icon-button small" type="button" title="Tạo thư mục" aria-label="Tạo thư mục"><svg><use href="#i-plus"></use></svg></button></div>
+            <div id="folderTree" class="folder-tree"></div>
+          </div>
+        </aside>
+
+        <section class="library-pane">
+          <div class="library-toolbar">
+            <div>
+              <h1 id="viewTitle">Tất cả bookmark</h1>
+              <p id="resultCount">Đang tải...</p>
+            </div>
+            <div class="toolbar-controls">
+              <label class="select-all"><input id="selectAll" type="checkbox" /> Chọn tất cả</label>
+              <select id="domainSelect" title="Lọc theo website"><option value="all">Tất cả website</option></select>
+              <select id="sortSelect" title="Sắp xếp">
+                <option value="newest">Mới thêm</option>
+                <option value="oldest">Cũ nhất</option>
+                <option value="az">Tên A - Z</option>
+                <option value="za">Tên Z - A</option>
+                <option value="domain">Tên miền</option>
+                <option value="folder">Thư mục</option>
+                <option value="mostVisited">Truy cập nhiều nhất</option>
+                <option value="recentVisited">Truy cập gần nhất</option>
+                <option value="manual">Thứ tự thủ công</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="bulkBar" class="bulk-bar is-hidden">
+            <strong><span id="selectedCount">0</span> đã chọn</strong>
+            <button data-bulk="open" type="button"><svg><use href="#i-external"></use></svg>Mở</button>
+            <button data-bulk="copy" type="button"><svg><use href="#i-copy"></use></svg>Sao chép</button>
+            <button data-bulk="move" type="button"><svg><use href="#i-move"></use></svg>Di chuyển</button>
+            <button data-bulk="read" type="button"><svg><use href="#i-book"></use></svg>Đã đọc</button>
+            <button data-bulk="delete" class="danger-text" type="button"><svg><use href="#i-trash"></use></svg>Xóa</button>
+            <button id="clearSelection" class="icon-button" type="button" title="Bỏ chọn" aria-label="Bỏ chọn"><svg><use href="#i-x"></use></svg></button>
+          </div>
+
+          <div class="bookmark-list-head"><span></span><span>Bookmark</span><span>Thư mục</span><span>Hoạt động</span><span></span></div>
+          <div id="bookmarkList" class="bookmark-list" aria-live="polite"></div>
+          <button id="loadMore" class="load-more is-hidden" type="button">Xem thêm</button>
+        </section>
+      </section>
+
+      <section id="cleanupView" class="view page-view">
+        <div class="page-heading"><div><h1>Dọn dẹp thư viện</h1><p>Xem trước mọi thay đổi trước khi xóa hoặc sửa dữ liệu.</p></div></div>
+        <div class="cleanup-grid">
+          <section class="tool-section">
+            <div class="tool-heading"><div class="tool-icon coral"><svg><use href="#i-copy"></use></svg></div><div><h2>Bookmark trùng lặp</h2><p id="duplicateSummary">Đang phân tích...</p></div><button id="cleanDuplicates" class="button-secondary" type="button">Dọn bản đề xuất</button></div>
+            <div id="duplicateGroups" class="duplicate-groups"></div>
+          </section>
+          <section class="tool-section">
+            <div class="tool-heading"><div class="tool-icon blue"><svg><use href="#i-link"></use></svg></div><div><h2>Kiểm tra liên kết</h2><p id="linkSummary">Chưa kiểm tra trong phiên này</p></div><button id="checkLinks" class="button-primary" type="button">Bắt đầu kiểm tra</button></div>
+            <div class="progress-track"><span id="linkProgress"></span></div>
+            <div id="linkResults" class="link-results"></div>
+          </section>
+        </div>
+      </section>
+
+      <section id="insightsView" class="view page-view">
+        <div class="page-heading"><div><h1>Tổng quan thư viện</h1><p>Nhìn nhanh cấu trúc và thói quen lưu bookmark.</p></div></div>
+        <div id="statCards" class="stat-grid"></div>
+        <div class="insight-grid">
+          <section class="chart-section"><h2>Tên miền được lưu nhiều nhất</h2><div id="domainChart" class="bar-chart"></div></section>
+          <section class="chart-section"><h2>Bookmark thêm trong 6 tháng</h2><div id="monthChart" class="month-chart"></div></section>
+          <section class="chart-section wide"><h2>Thư mục lớn nhất</h2><div id="folderStats" class="folder-stats"></div></section>
+        </div>
+      </section>
+
+      <section id="automationView" class="view page-view">
+        <div class="page-heading"><div><h1>Tự động sắp xếp</h1><p>Tạo luật theo domain, tiêu đề, URL, thư mục hoặc tag để Bookmark Lens tự di chuyển và gắn nhãn.</p></div><button id="applyRulesAll" class="button-primary" type="button"><svg><use href="#i-check"></use></svg>Áp dụng toàn bộ</button></div>
+        <div class="automation-grid">
+          <section class="settings-section automation-builder">
+            <h2>Tạo luật</h2>
+            <p id="autoRuleSummary">Chưa có luật nào.</p>
+            <div class="rule-form">
+              <label><span>Tên luật</span><input id="ruleName" type="text" placeholder="Ví dụ: Tài liệu GitHub" /></label>
+              <label><span>Khi</span><select id="ruleField"><option value="domain">Domain</option><option value="title">Tiêu đề</option><option value="url">URL</option><option value="folder">Thư mục</option><option value="tag">Tag</option></select></label>
+              <label><span>Khớp</span><select id="ruleMatch"><option value="contains">Chứa</option><option value="equals">Bằng</option><option value="starts">Bắt đầu bằng</option><option value="ends">Kết thúc bằng</option></select></label>
+              <label><span>Giá trị</span><input id="ruleValue" type="text" placeholder="github.com, docs, report..." /></label>
+              <label><span>Di chuyển tới</span><select id="ruleFolder"></select></label>
+              <label><span>Gắn tag</span><input id="ruleTags" type="text" placeholder="dev, tài liệu" /></label>
+              <label><span>Trạng thái</span><select id="ruleReadStatus"><option value="">Không đổi</option><option value="unread">Chưa đọc</option><option value="read">Đã đọc</option></select></label>
+              <button id="addRule" class="button-primary" type="button"><svg><use href="#i-plus"></use></svg>Thêm luật</button>
+            </div>
+          </section>
+          <section class="settings-section">
+            <h2>Luật đang dùng</h2>
+            <p>Bật/tắt, áp dụng cho thư viện hiện tại hoặc xóa luật không cần nữa.</p>
+            <div class="button-row"><button id="applyRulesSelected" class="button-secondary" type="button"><svg><use href="#i-check"></use></svg>Áp dụng mục đã chọn</button></div>
+            <div id="ruleList" class="rule-list"></div>
+          </section>
+          <section class="settings-section">
+            <h2>Gợi ý thư mục</h2>
+            <p>Dựa trên các domain xuất hiện nhiều lần trong thư viện.</p>
+            <div id="ruleSuggestionList" class="suggestion-list"></div>
+          </section>
+          <section class="settings-section">
+            <h2>Không gian làm việc</h2>
+            <p>Lưu bộ lọc hay dùng để quay lại nhanh bằng một cú bấm.</p>
+            <div class="workspace-form"><input id="workspaceName" type="text" placeholder="Tên workspace" /><button id="saveWorkspace" class="button-secondary" type="button">Lưu bộ lọc hiện tại</button></div>
+            <div id="workspaceList" class="workspace-list"></div>
+          </section>
+        </div>
+      </section>
+
+      <section id="backupView" class="view page-view">
+        <div class="page-heading"><div><h1>Sao lưu và tùy chỉnh</h1><p>Giữ dữ liệu an toàn và điều chỉnh trải nghiệm theo cách bạn dùng.</p></div></div>
+        <div class="settings-layout">
+          <section class="settings-section">
+            <h2>Xuất dữ liệu</h2><p>Tạo bản sao gồm cấu trúc thư mục, tag, ghi chú và trạng thái đọc.</p>
+            <div class="button-row"><button id="exportJson" class="button-primary" type="button"><svg><use href="#i-download"></use></svg>Xuất JSON đầy đủ</button><button id="exportHtml" class="button-secondary" type="button"><svg><use href="#i-download"></use></svg>Xuất HTML</button></div>
+          </section>
+          <section class="settings-section">
+            <h2>Nhập dữ liệu</h2><p>Hỗ trợ file JSON của Bookmark Lens và file bookmark HTML từ trình duyệt.</p>
+            <label class="file-button"><svg><use href="#i-upload"></use></svg>Chọn file để nhập<input id="importFile" type="file" accept=".json,.html,.htm,application/json,text/html" /></label>
+          </section>
+          <section class="settings-section restore-section">
+            <h2>Khôi phục lần xóa gần nhất</h2><p id="lastBackupInfo">Chưa có bản phục hồi.</p>
+            <button id="restoreBackup" class="button-secondary" type="button"><svg><use href="#i-undo"></use></svg>Khôi phục bookmark</button>
+          </section>
+          <section class="settings-section">
+            <h2>Tùy chọn</h2>
+            <label class="setting-row"><span><strong>Sắp xếp mặc định</strong><small>Áp dụng khi mở trình quản lý</small></span><select id="defaultSort"><option value="newest">Mới thêm</option><option value="oldest">Cũ nhất</option><option value="az">Tên A - Z</option><option value="za">Tên Z - A</option><option value="domain">Tên miền</option><option value="folder">Thư mục</option><option value="mostVisited">Truy cập nhiều nhất</option><option value="recentVisited">Truy cập gần nhất</option><option value="manual">Thứ tự thủ công</option></select></label>
+            <label class="setting-row"><span><strong>Ngôn ngữ</strong><small>Chọn tiếng Việt hoặc tiếng Anh cho giao diện</small></span><select id="languageSelect" class="language-select"><option value="vi">Tiếng Việt</option><option value="en">English</option></select></label>
+            <label class="setting-row"><span><strong>Giao diện</strong><small>Theo hệ thống, sáng hoặc tối</small></span><select id="themeSetting"><option value="system">Theo hệ thống</option><option value="light">Sáng</option><option value="dark">Tối</option></select></label>
+            <label class="setting-row"><span><strong>Đồng bộ cài đặt</strong><small>Lưu theme, rule, workspace và tùy chọn bằng chrome.storage.sync</small></span><input id="syncSettings" type="checkbox" /></label>
+            <label class="setting-row"><span><strong>Tự áp luật khi lưu mới</strong><small>Bookmark mới sẽ được di chuyển/gắn tag theo luật phù hợp</small></span><input id="autoOrganizeNew" type="checkbox" /></label>
+            <label class="setting-row"><span><strong>Chế độ gọn</strong><small>Hiển thị danh sách dày hơn cho thư viện lớn</small></span><input id="compactMode" type="checkbox" /></label>
+            <label class="setting-row"><span><strong>Số dòng mỗi lần tải</strong><small>Giảm nếu thư viện rất lớn, tăng nếu máy khỏe</small></span><select id="pageSize"><option value="80">80</option><option value="120">120</option><option value="200">200</option><option value="320">320</option></select></label>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <footer class="dashboard-footer">Bookmark Lens · Developed by <strong>Kenzy</strong></footer>
+
+    <dialog id="editorDialog" class="dialog editor-dialog">
+      <form id="editorForm" method="dialog">
+        <div class="dialog-head"><div><h2>Chi tiết bookmark</h2><p>Thông tin được đồng bộ ngay với Chrome.</p></div><button class="icon-button close-dialog" type="button" title="Đóng" aria-label="Đóng"><svg><use href="#i-x"></use></svg></button></div>
+        <input id="editorId" type="hidden" />
+        <label><span>Tiêu đề</span><input id="editorTitle" type="text" required /></label>
+        <label><span>Địa chỉ</span><input id="editorUrl" type="text" required /></label>
+        <label><span>Thư mục</span><select id="editorFolder"></select></label>
+        <label><span>Tag</span><input id="editorTags" type="text" placeholder="công việc, học tập, đọc sau" /></label>
+        <label><span>Màu tag</span><select id="editorTagColor"><option value="green">Xanh lá</option><option value="blue">Xanh dương</option><option value="coral">San hô</option><option value="gold">Vàng</option><option value="gray">Xám</option></select></label>
+        <label><span>Ghi chú</span><textarea id="editorNote" rows="4" placeholder="Thêm ngữ cảnh để dễ tìm lại..."></textarea></label>
+        <div class="preview-panel">
+          <div><strong>Xem trước website</strong><span id="previewStatus">Chưa tải</span></div>
+          <button id="loadPreview" class="button-secondary" type="button"><svg><use href="#i-eye"></use></svg>Tải xem trước</button>
+          <iframe id="previewFrame" title="Xem trước website" sandbox="allow-scripts allow-same-origin"></iframe>
+        </div>
+        <div class="toggle-row"><label><input id="editorUnread" type="checkbox" /> Chưa đọc</label><label><input id="editorPinned" type="checkbox" /> Ghim bookmark</label></div>
+        <div class="dialog-actions"><button class="button-secondary close-dialog" type="button">Hủy</button><button class="button-primary" type="submit">Lưu thay đổi</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="moveDialog" class="dialog small-dialog">
+      <form id="moveForm" method="dialog"><div class="dialog-head"><h2>Di chuyển bookmark</h2><button class="icon-button close-dialog" type="button" aria-label="Đóng"><svg><use href="#i-x"></use></svg></button></div><label><span>Thư mục đích</span><select id="moveFolder"></select></label><div class="dialog-actions"><button class="button-secondary close-dialog" type="button">Hủy</button><button class="button-primary" type="submit">Di chuyển</button></div></form>
+    </dialog>
+
+    <dialog id="folderDialog" class="dialog small-dialog">
+      <form id="folderForm" method="dialog"><div class="dialog-head"><h2>Tạo thư mục mới</h2><button class="icon-button close-dialog" type="button" aria-label="Đóng"><svg><use href="#i-x"></use></svg></button></div><label><span>Tên thư mục</span><input id="folderName" type="text" required /></label><label><span>Vị trí</span><select id="folderParent"></select></label><div class="dialog-actions"><button class="button-secondary close-dialog" type="button">Hủy</button><button class="button-primary" type="submit">Tạo thư mục</button></div></form>
+    </dialog>
+
+    <dialog id="addDialog" class="dialog add-dialog">
+      <form id="addForm" method="dialog"><div class="dialog-head"><div><h2>Lưu nhanh</h2><p id="addDuplicateHint">Lưu tab hiện tại hoặc cả cửa sổ.</p></div><button class="icon-button close-dialog" type="button" aria-label="Đóng"><svg><use href="#i-x"></use></svg></button></div><label><span>Tiêu đề</span><input id="addTitle" type="text" required /></label><label><span>Địa chỉ</span><input id="addUrl" type="text" required /></label><label><span>Thư mục</span><select id="addFolder"></select></label><label><span>Tag</span><input id="addTags" type="text" placeholder="công việc, đọc sau" /></label><label><span>Màu tag</span><select id="addTagColor"><option value="green">Xanh lá</option><option value="blue">Xanh dương</option><option value="coral">San hô</option><option value="gold">Vàng</option><option value="gray">Xám</option></select></label><label class="inline-check"><input id="addUnread" type="checkbox" /> Thêm vào danh sách đọc sau</label><div class="dialog-actions split"><button id="saveWindow" class="button-secondary" type="button">Lưu tất cả tab</button><span></span><button class="button-secondary close-dialog" type="button">Hủy</button><button class="button-primary" type="submit">Lưu tab</button></div></form>
+    </dialog>
+
+    <dialog id="confirmDialog" class="dialog small-dialog">
+      <form id="confirmForm" method="dialog"><h2 id="confirmTitle">Xác nhận</h2><p id="confirmMessage"></p><div class="dialog-actions"><button class="button-secondary close-dialog" type="button">Hủy</button><button id="confirmAction" class="button-danger" type="submit">Tiếp tục</button></div></form>
+    </dialog>
+
+    <dialog id="commandDialog" class="dialog command-dialog">
+      <form method="dialog">
+        <div class="global-search command-search"><svg><use href="#i-search"></use></svg><input id="commandInput" type="search" placeholder="Gõ để chạy lệnh..." autocomplete="off" /><button class="icon-button close-dialog" type="button" aria-label="Đóng"><svg><use href="#i-x"></use></svg></button></div>
+        <div id="commandList" class="command-list"></div>
+      </form>
+    </dialog>
+
+    <dialog id="helpDialog" class="dialog">
+      <form method="dialog">
+        <div class="dialog-head"><div><h2>Trợ giúp nhanh</h2><p>Các thao tác nhanh nhất khi dùng Bookmark Lens.</p></div><button class="icon-button close-dialog" type="button" aria-label="Đóng"><svg><use href="#i-x"></use></svg></button></div>
+        <div class="help-grid">
+          <div><strong>Tìm theo site</strong><span><code>site:github.com</code></span></div>
+          <div><strong>Tìm theo thư mục</strong><span><code>folder:"Công việc"</code></span></div>
+          <div><strong>Tìm tag/trạng thái</strong><span><code>tag:dev status:unread</code></span></div>
+          <div><strong>Command palette</strong><span><code>Ctrl/⌘ + Shift + K</code></span></div>
+          <div><strong>Tìm nhanh</strong><span><code>Ctrl/⌘ + K</code></span></div>
+          <div><strong>Lưu tab</strong><span><code>Alt + Shift + B</code></span></div>
+        </div>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"><span id="toastMessage"></span><button id="undoButton" class="is-hidden" type="button"><svg><use href="#i-undo"></use></svg>Hoàn tác</button></div>
+    <script src="core.js"></script>
+    <script src="i18n.js"></script>
+    <script src="dashboard.js"></script>
+  </body>
+</html>

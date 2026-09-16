@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bookmark Lens Side Panel</title>
+    <script src="theme-init.js"></script>
+    <link rel="stylesheet" href="sidepanel.css" />
+  </head>
+  <body>
+    <svg class="icon-sprite" aria-hidden="true">
+      <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"></path></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></symbol>
+      <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 3h7v7m0-7L10 14"></path><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"></path></symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21h-4v-.08A1.7 1.7 0 0 0 9 19.37a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.63 15 1.7 1.7 0 0 0 3.08 14H3v-4h.08A1.7 1.7 0 0 0 4.63 9a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.63h.01A1.7 1.7 0 0 0 10 3.08V3h4v.08A1.7 1.7 0 0 0 15 4.63a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.37 9v.01A1.7 1.7 0 0 0 20.92 10H21v4h-.08A1.7 1.7 0 0 0 19.4 15Z"></path></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="m18 6-12 12M6 6l12 12"></path></symbol>
+    </svg>
+
+    <main class="panel">
+      <header class="panel-head">
+        <div class="brand"><div class="brand-mark"><svg><use href="#i-bookmark"></use></svg></div><div><h1>Bookmark Lens</h1><p id="libraryCount">Đang tải...</p></div></div>
+        <div class="panel-actions">
+          <select id="languageSelect" class="language-select" aria-label="Ngôn ngữ" title="Ngôn ngữ">
+            <option value="vi">VI</option>
+            <option value="en">EN</option>
+          </select>
+          <button id="openDashboard" class="icon-button" type="button" title="Mở dashboard" aria-label="Mở dashboard"><svg><use href="#i-settings"></use></svg></button>
+        </div>
+      </header>
+
+      <section class="actions">
+        <button id="saveTab" class="button-primary" type="button"><svg><use href="#i-plus"></use></svg>Lưu tab</button>
+        <button id="openCurrentDomain" class="button-secondary" type="button">Domain này</button>
+      </section>
+
+      <label class="search-box">
+        <svg><use href="#i-search"></use></svg>
+        <input id="searchInput" type="search" placeholder="Tìm hoặc site:, tag:, folder:..." autocomplete="off" />
+        <button id="clearSearch" class="icon-button is-hidden" type="button" aria-label="Xóa"><svg><use href="#i-x"></use></svg></button>
+      </label>
+
+      <section class="chips" id="domainChips" aria-label="Domain phổ biến"></section>
+      <section class="chips" id="workspaceChips" aria-label="Workspace"></section>
+      <section id="results" class="results" aria-live="polite"></section>
+      <button id="loadMore" class="load-more is-hidden" type="button">Xem thêm</button>
+      <footer>Developed by <strong>Kenzy</strong></footer>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="core.js"></script>
+    <script src="i18n.js"></script>
+    <script src="sidepanel.js"></script>
+  </body>
+</html>
